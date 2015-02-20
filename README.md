@@ -17,3 +17,4 @@ zanegort currently responds to 4 commands:
 * `!stack <username>`: Returns the Stack Overflow user ID and profile URL
   associated with `username`.
 * `!help`: Shows a summary of available commands.
+* `!source`: URL to bot source code
