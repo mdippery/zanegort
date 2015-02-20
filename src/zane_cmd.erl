@@ -6,27 +6,27 @@
 -define(HELP_URL, ?SOURCE_URL).
 
 
-handle(Sock, #irc_client{channel=Channel}, Nick, "!set", [Key,Value|Rest]) ->
+handle(Sock, #irc_client{channel=Channel}, Nick, "set", [Key,Value|Rest]) ->
     % Due to the way lines are parsed, URLs beginning with "http://"
     % will be chopped in two, so reassemble before storing.
     Val = string:join([Value|Rest], ":"),
     put_property(Sock, Channel, Key, Nick, Val);
 
-handle(Sock, #irc_client{channel=Channel}, _Nick, "!source", _Args) ->
+handle(Sock, #irc_client{channel=Channel}, _Nick, "source", _Args) ->
     Msg = "Source is available at " ++ ?SOURCE_URL,
     irc_proto:say(Sock, Channel, Msg);
 
-handle(Sock, #irc_client{channel=Channel}, _Nick, "!web", [Nickname|_Rest]) ->
+handle(Sock, #irc_client{channel=Channel}, _Nick, "web", [Nickname|_Rest]) ->
     Prefix = "",
     Noun = "website",
     get_property_or_error(Sock, Channel, Nickname, "web", Prefix, Noun);
 
-handle(Sock, #irc_client{channel=Channel}, _Nick, "!github", [Nickname|_Rest]) ->
+handle(Sock, #irc_client{channel=Channel}, _Nick, "github", [Nickname|_Rest]) ->
     Prefix = "https://github.com/",
     Noun = "GitHub profile",
     get_property_or_error(Sock, Channel, Nickname, "github", Prefix, Noun);
 
-handle(Sock, #irc_client{channel=Channel}, _Nick, "!stack", [Nickname|_Rest]) ->
+handle(Sock, #irc_client{channel=Channel}, _Nick, "stack", [Nickname|_Rest]) ->
     Prefix = "http://stackoverflow.com/users/",
     Noun = "Stack Overflow profile",
     get_property_or_error(Sock, Channel, Nickname, "stack", Prefix, Noun);

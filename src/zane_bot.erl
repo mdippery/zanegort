@@ -35,7 +35,9 @@ process_line(Sock, Client, [From,"PRIVMSG",_Channel|Args]) ->
     Nick = zane_irc:extract_nickname(From),
     [MaybeCmd|Rest] = Args,
     case string:substr(MaybeCmd, 1, 1) of
-        CmdPrefix -> zane_cmd:handle(Sock, Client, Nick, MaybeCmd, Rest);
+        CmdPrefix ->
+            RawCmd = string:substr(MaybeCmd, 1),
+            zane_cmd:handle(Sock, Client, Nick, RawCmd, Rest);
         _ -> ok
     end;
 
