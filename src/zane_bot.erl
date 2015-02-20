@@ -1,4 +1,4 @@
--module(zane_app).
+-module(zane_bot).
 -export([connect/4]).
 
 
