@@ -8,8 +8,8 @@
 connect(Host, Port, Nickname, Channel) ->
     Client = #irc_client{host=Host, port=Port, nickname=Nickname, channel=Channel},
     {ok, Sock} = gen_tcp:connect(Host, Port, [{packet, line}]),
-    send_line(Sock, "NICK " ++ Nickname),
-    send_line(Sock, "USER " ++ Nickname ++ " 0 * :" ++ Nickname),
+    irc_proto:nick(Sock, Nickname),
+    irc_proto:user(Sock, Nickname),
     loop(Sock, Client).
 
 
@@ -20,17 +20,17 @@ loop(Sock, Client) ->
             process_line(Sock, Client, lists:map(fun zane_string:strip/1, string:tokens(Data, " :"))),
             loop(Sock, Client);
         quit ->
-            send_line(Sock, "QUIT :User terminated connection"),
+            irc_proto:quit(Sock, "User terminated connection"),
             gen_tcp:close(Sock),
             exit(stopped)
     end.
 
 
 process_line(Sock, Client, [_,"376"|_]) ->
-    send_line(Sock, "JOIN :" ++ Client#irc_client.channel);
+    irc_proto:join(Sock, Client#irc_client.channel);
 
 process_line(Sock, _Client, ["PING"|Rest]) ->
-    send_line(Sock, "PONG " ++ Rest);
+    irc_proto:pong(Sock, Rest);
 
 process_line(_Sock, _Client, [_,"PRIVMSG",_Channel|Args]) ->
     [MaybeCmd|Rest] = Args,
@@ -40,8 +40,3 @@ process_line(_Sock, _Client, [_,"PRIVMSG",_Channel|Args]) ->
     end;
 
 process_line(_Sock, _Client, _Line) -> ok.
-
-
-send_line(Sock, Line) ->
-    io:format("[~w] Writing line:~n~s~n~n", [Sock, Line]),
-    gen_tcp:send(Sock, Line ++ "\r\n").
