@@ -6,21 +6,30 @@
 -define(HELP_URL, ?SOURCE_URL).
 
 
-handle(_Sock, _Client, Nick, "!set", [Key,Value|_Rest]) ->
-    put_property(Key, Nick, Value);
+handle(_Sock, _Client, Nick, "!set", [Key,Value|Rest]) ->
+    % Due to the way lines are parsed, URLs beginning with "http://"
+    % will be chopped in two, so reassemble before storing.
+    Val = string:join([Value|Rest], ":"),
+    put_property(Key, Nick, Val);
 
 handle(Sock, #irc_client{channel=Channel}, _Nick, "!source", _Args) ->
     Msg = "Source is available at " ++ ?SOURCE_URL,
     irc_proto:say(Sock, Channel, Msg);
 
-handle(_Sock, _Client, _Nick, "!web", [Nickname|_Rest]) ->
-    get_property(Nickname, "web");
+handle(Sock, #irc_client{channel=Channel}, _Nick, "!web", [Nickname|_Rest]) ->
+    Prefix = "",
+    Noun = "website",
+    get_property_or_error(Sock, Channel, Nickname, "stack", Prefix, Noun);
 
-handle(_Sock, _Client, _Nick, "!github", [Nickname|_Rest]) ->
-    get_property(Nickname, "github");
+handle(Sock, #irc_client{channel=Channel}, _Nick, "!github", [Nickname|_Rest]) ->
+    Prefix = "https://github.com/",
+    Noun = "GitHub profile",
+    get_property_or_error(Sock, Channel, Nickname, "github", Prefix, Noun);
 
-handle(_Sock, _Client, _Nick, "!stack", [Nickname|_Rest]) ->
-    get_property(Nickname, "stack");
+handle(Sock, #irc_client{channel=Channel}, _Nick, "!stack", [Nickname|_Rest]) ->
+    Prefix = "http://stackoverflow.com/users/",
+    Noun = "Stack Overflow profile",
+    get_property_or_error(Sock, Channel, Nickname, "stack", Prefix, Noun);
 
 handle(Sock, #irc_client{channel=Channel}, _Nick, "!help", _Args) ->
     Msg = "Command help is available at " ++ ?HELP_URL,
@@ -30,18 +39,20 @@ handle(_Sock, _Client, _Nick, Other, Args) ->
     io:format("Invalid cmd: ~p ~p. Ignoring.~n", [Other, Args]).
 
 
-get_property(Nickname, Key) ->
-    io:format("Retrieving ~p key for ~p~n", [Key, Nickname]).
+get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
+    case zane_db:find(Key, Nickname) of
+        {ok, Value} ->
+            Url = Prefix ++ Value,
+            irc_proto:say(Sock, Channel, Nickname ++ "'s " ++ Noun ++ " is " ++ Url);
+        nil ->
+            irc_proto:say(Sock, Channel, Nickname ++ " has not set their " ++ Noun ++ " yet");
+        {error, Reason} ->
+            io:format("Error getting ~p for ~p: ~p~n", [Key, Nickname, Reason])
+    end.
 
 
-put_property("web", Nickname, Url) ->
-    io:format("Storing website for ~p: ~p~n", [Nickname, Url]);
-
-put_property("github", Nickname, Username) ->
-    io:format("Storing GitHub for ~p: ~p~n", [Nickname, Username]);
-
-put_property("stack", Nickname, Uid) ->
-    io:format("Storing Stack Overflow ID for ~p: ~p~n", [Nickname, Uid]);
-
-put_property(Key, Nickname, _Val) ->
-    io:format("Invalid key for ~p: ~p~n", [Key, Nickname]).
+put_property(Type, Nickname, Value) ->
+    case lists:member(Type, ["web", "github", "stack"]) of
+        true -> zane_db:insert(Type, Nickname, Value);
+        false -> io:format("Invalid key for ~p: ~p. Ignoring.~n", [Nickname, Type])
+    end.

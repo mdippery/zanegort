@@ -10,7 +10,7 @@ db_path(Type) -> filename:join(db_base_dir(), Type).
 
 insert(Type, Nickname, Value) ->
     Path = db_path(Type),
-    Line = string:join([Nickname, Value], ","),
+    Line = string:join([Nickname, Value], ",") ++ "\n",
     file:write_file(Path, Line, [append]).
 
 
