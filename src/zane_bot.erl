@@ -16,7 +16,7 @@ connect(Host, Port, Nickname, Channel) ->
 loop(Sock, Client) ->
     receive
         {tcp, Sock, Data} ->
-            io:format("[~w] Received line:~n~s~n", [Sock, Data]),
+            io:format("Received line: <~s>~n", [Data]),
             process_line(Sock, Client, lists:map(fun zane_string:strip/1, string:tokens(Data, " :"))),
             loop(Sock, Client);
         quit ->
