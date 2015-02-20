@@ -1,5 +1,5 @@
 -module(irc_proto).
--export([pong/2, nick/2, user/2, join/2, quit/2]).
+-export([pong/2, nick/2, user/2, join/2, quit/2, say/3]).
 
 
 pong(Sock, Resp) -> send(Sock, "PONG " ++ Resp).
@@ -15,6 +15,9 @@ join(Sock, Channel) -> send(Sock, "JOIN :" ++ Channel).
 
 
 quit(Sock, Msg) -> send(Sock, "QUIT :" ++ Msg).
+
+
+say(Sock, To, Msg) -> send(Sock, "PRIVMSG " ++ To ++ " :" ++ Msg).
 
 
 send(Sock, Line) ->

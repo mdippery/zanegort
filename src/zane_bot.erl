@@ -1,8 +1,6 @@
 -module(zane_bot).
 -export([connect/4]).
-
-
--record(irc_client, {host, port=6667, nickname, channel}).
+-include("zane.hrl").
 
 
 connect(Host, Port, Nickname, Channel) ->
@@ -33,10 +31,10 @@ process_line(Sock, Client, [_,"376"|_]) ->
 process_line(Sock, _Client, ["PING"|Rest]) ->
     irc_proto:pong(Sock, Rest);
 
-process_line(_Sock, _Client, [_,"PRIVMSG",_Channel|Args]) ->
+process_line(Sock, Client, [_,"PRIVMSG",_Channel|Args]) ->
     [MaybeCmd|Rest] = Args,
     case string:substr(MaybeCmd, 1, 1) of
-        "!" -> zane_cmd:handle(MaybeCmd, Rest);
+        "!" -> zane_cmd:handle(Sock, Client, MaybeCmd, Rest);
         _ -> ok
     end;
 

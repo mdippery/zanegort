@@ -1,24 +1,30 @@
 -module(zane_cmd).
--export([handle/2]).
+-export([handle/4]).
+-include("zane.hrl").
+
+-define(SOURCE_URL, "https://github.com/mdippery/zanegort").
+-define(HELP_URL, ?SOURCE_URL).
 
 
-handle("!set", Args) ->
+handle(_Sock, _Client, "!set", Args) ->
     io:format("Handling 'set ~p'~n", [Args]);
 
-handle("!source", _Args) ->
-    io:format("Source is https://github.com/mdippery/zanegort~n");
+handle(Sock, Client, "!source", _Args) ->
+    Msg = "Source is available at " ++ ?SOURCE_URL,
+    irc_proto:say(Sock, Client#irc_client.channel, Msg);
 
-handle("!web", [Url|_Rest]) ->
+handle(_Sock, _Client, "!web", [Url|_Rest]) ->
     io:format("Returning website for ~p~n", [Url]);
 
-handle("!github", [Username|_Rest]) ->
+handle(_Sock, _Client, "!github", [Username|_Rest]) ->
     io:format("GitHub: https://github.com/~p~n", [Username]);
 
-handle("!stack", [UserId|_Rest]) ->
+handle(_Sock, _Client, "!stack", [UserId|_Rest]) ->
     io:format("Stack Overflow: http://stackoverflow.com/users/~p~n", [UserId]);
 
-handle("!help", _Args) ->
-    io:format("Responding to help request~n");
+handle(Sock, Client, "!help", _Args) ->
+    Msg = "Command help is available at " ++ ?HELP_URL,
+    irc_proto:say(Sock, Client#irc_client.channel, Msg);
 
-handle(Other, Args) ->
+handle(_Sock, _Client, Other, Args) ->
     io:format("Invalid cmd: ~p ~p. Ignoring.~n", [Other, Args]).
