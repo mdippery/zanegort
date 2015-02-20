@@ -20,6 +20,4 @@ quit(Sock, Msg) -> send(Sock, "QUIT :" ++ Msg).
 say(Sock, To, Msg) -> send(Sock, "PRIVMSG " ++ To ++ " :" ++ Msg).
 
 
-send(Sock, Line) ->
-    io:format("Sending line: <~p>~n", [Line]),
-    gen_tcp:send(Sock, Line ++ "\r\n").
+send(Sock, Line) -> gen_tcp:send(Sock, Line ++ "\r\n").
