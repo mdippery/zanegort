@@ -13,9 +13,7 @@ insert(Type, Nickname, Value) ->
         {ok, _} ->
             % TODO: Replace duplicates
             {error, duplicate};
-        {error, Reason} ->
-            {error, Reason};
-        nil ->
+        _ ->
             Path = db_path(Type),
             Line = string:join([Nickname, Value], ",") ++ "\n",
             file:write_file(Path, Line, [append])
