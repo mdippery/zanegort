@@ -17,7 +17,8 @@ loop(Sock, Client) ->
     receive
         {tcp, Sock, Data} ->
             io:format("Received line: <~s>~n", [Data]),
-            process_line(Sock, Client, lists:map(fun zane_string:strip/1, string:tokens(Data, " :"))),
+            Line = zane_string:strip(Data),
+            process_line(Sock, Client, string:tokens(Line, " :")),
             loop(Sock, Client);
         quit ->
             irc_proto:quit(Sock, "User terminated connection"),
