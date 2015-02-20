@@ -17,7 +17,7 @@ loop(Sock, Client) ->
     receive
         {tcp, Sock, Data} ->
             io:format("[~w] Received line:~n~s~n", [Sock, Data]),
-            process_line(Sock, Client, lists:map(fun trim_newlines/1, string:tokens(Data, " :"))),
+            process_line(Sock, Client, lists:map(fun zane_string:strip/1, string:tokens(Data, " :"))),
             loop(Sock, Client);
         quit ->
             send_line(Sock, "QUIT :User terminated connection"),
@@ -45,9 +45,6 @@ process_line(_Sock, _Client, _Line) -> ok.
 process_command(Cmd, Args) ->
     io:format("Processing command: [~s], [~s]", [Cmd, Args]),
     ok.
-
-
-trim_newlines(S) -> string:strip(S, both, $\n).
 
 
 send_line(Sock, Line) ->
