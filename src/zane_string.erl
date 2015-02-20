@@ -2,4 +2,4 @@
 -export([strip/1]).
 
 
-strip(S) -> string:strip(S, both, $\n).
+strip(S) -> string:strip(string:strip(S, right, $\n), right, $\r).
