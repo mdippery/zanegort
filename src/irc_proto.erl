@@ -18,5 +18,5 @@ quit(Sock, Msg) -> send(Sock, "QUIT :" ++ Msg).
 
 
 send(Sock, Line) ->
-    io:format("Sending line: <~s>~n", [Line]),
+    io:format("Sending line: <~p>~n", [Line]),
     gen_tcp:send(Sock, Line ++ "\r\n").
