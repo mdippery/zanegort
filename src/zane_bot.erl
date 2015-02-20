@@ -31,10 +31,11 @@ process_line(Sock, _Client, ["PING"|Rest]) ->
     irc_proto:pong(Sock, Rest);
 
 process_line(Sock, Client, [From,"PRIVMSG",_Channel|Args]) ->
+    CmdPrefix = zane_utils:getenv("ZANE_CMD_PREFIX", "!"),
     Nick = zane_irc:extract_nickname(From),
     [MaybeCmd|Rest] = Args,
     case string:substr(MaybeCmd, 1, 1) of
-        "!" -> zane_cmd:handle(Sock, Client, Nick, MaybeCmd, Rest);
+        CmdPrefix -> zane_cmd:handle(Sock, Client, Nick, MaybeCmd, Rest);
         _ -> ok
     end;
 
