@@ -31,11 +31,18 @@ process_line(Sock, Client, [_,"376"|_]) ->
 process_line(Sock, _Client, ["PING"|Rest]) ->
     irc_proto:pong(Sock, Rest);
 
-process_line(Sock, Client, [_,"PRIVMSG",_Channel|Args]) ->
+process_line(Sock, Client, [From,"PRIVMSG",_Channel|Args]) ->
+    Nick = extract_nickname(From),
     [MaybeCmd|Rest] = Args,
     case string:substr(MaybeCmd, 1, 1) of
-        "!" -> zane_cmd:handle(Sock, Client, MaybeCmd, Rest);
+        "!" -> zane_cmd:handle(Sock, Client, Nick, MaybeCmd, Rest);
         _ -> ok
     end;
 
 process_line(_Sock, _Client, _Line) -> ok.
+
+
+extract_nickname(Username) ->
+    [User|_] = string:tokens(Username, "@"),
+    [From|_] = string:tokens(User, "!"),
+    From.
