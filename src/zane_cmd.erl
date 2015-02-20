@@ -6,11 +6,11 @@
 -define(HELP_URL, ?SOURCE_URL).
 
 
-handle(_Sock, _Client, Nick, "!set", [Key,Value|Rest]) ->
+handle(Sock, #irc_client{channel=Channel}, Nick, "!set", [Key,Value|Rest]) ->
     % Due to the way lines are parsed, URLs beginning with "http://"
     % will be chopped in two, so reassemble before storing.
     Val = string:join([Value|Rest], ":"),
-    put_property(Key, Nick, Val);
+    put_property(Sock, Channel, Key, Nick, Val);
 
 handle(Sock, #irc_client{channel=Channel}, _Nick, "!source", _Args) ->
     Msg = "Source is available at " ++ ?SOURCE_URL,
@@ -54,11 +54,13 @@ get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
     end.
 
 
-put_property(Type, Nickname, Value) ->
+put_property(Sock, Channel, Type, Nickname, Value) ->
     case lists:member(Type, ["web", "github", "stack"]) of
         true ->
             case zane_db:insert(Type, Nickname, Value) of
-                ok -> ok;
+                ok ->
+                    irc_proto:say(Sock, Channel, "Set " ++ Type ++ " for " ++ Nickname),
+                    ok;
                 {error, Reason} ->
                     io:format("Error saving ~p for ~p: ~p~n", [Type, Nickname, Reason]),
                     error
