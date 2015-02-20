@@ -35,16 +35,11 @@ process_line(Sock, _Client, ["PING"|Rest]) ->
 process_line(_Sock, _Client, [_,"PRIVMSG",_Channel|Args]) ->
     [MaybeCmd|Rest] = Args,
     case string:substr(MaybeCmd, 1, 1) of
-        "!" -> process_command(MaybeCmd, Rest);
+        "!" -> zane_cmd:handle(MaybeCmd, Rest);
         _ -> ok
     end;
 
 process_line(_Sock, _Client, _Line) -> ok.
-
-
-process_command(Cmd, Args) ->
-    io:format("Processing command: [~s], [~s]", [Cmd, Args]),
-    ok.
 
 
 send_line(Sock, Line) ->
