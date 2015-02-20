@@ -3,7 +3,7 @@ channels, particularly programming-oriented ones.
 
 ## Commands
 
-zanegort currently responds to 4 commands:
+zanegort currently responds to 8 commands:
 
 * `!set web <url>`: Associates the given URL with the user entering the
   command.
