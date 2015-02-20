@@ -41,6 +41,7 @@ process_line(_Sock, _Client, [_,"PRIVMSG",_Channel|Args]) ->
 
 process_line(_Sock, _Client, _Line) -> ok.
 
+
 process_command(Cmd, Args) ->
     io:format("Processing command: [~s], [~s]", [Cmd, Args]),
     ok.
