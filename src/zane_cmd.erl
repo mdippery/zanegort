@@ -19,7 +19,7 @@ handle(Sock, #irc_client{channel=Channel}, _Nick, "!source", _Args) ->
 handle(Sock, #irc_client{channel=Channel}, _Nick, "!web", [Nickname|_Rest]) ->
     Prefix = "",
     Noun = "website",
-    get_property_or_error(Sock, Channel, Nickname, "stack", Prefix, Noun);
+    get_property_or_error(Sock, Channel, Nickname, "web", Prefix, Noun);
 
 handle(Sock, #irc_client{channel=Channel}, _Nick, "!github", [Nickname|_Rest]) ->
     Prefix = "https://github.com/",
