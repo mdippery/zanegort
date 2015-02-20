@@ -9,9 +9,17 @@ db_path(Type) -> filename:join(db_base_dir(), Type).
 
 
 insert(Type, Nickname, Value) ->
-    Path = db_path(Type),
-    Line = string:join([Nickname, Value], ",") ++ "\n",
-    file:write_file(Path, Line, [append]).
+    case find(Type, Nickname) of
+        {ok, _} ->
+            % TODO: Replace duplicates
+            {error, duplicate};
+        {error, Reason} ->
+            {error, Reason};
+        nil ->
+            Path = db_path(Type),
+            Line = string:join([Nickname, Value], ",") ++ "\n",
+            file:write_file(Path, Line, [append])
+    end.
 
 
 find(Type, Nickname) ->

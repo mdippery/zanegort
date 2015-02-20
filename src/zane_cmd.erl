@@ -43,16 +43,27 @@ get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
     case zane_db:find(Key, Nickname) of
         {ok, Value} ->
             Url = Prefix ++ Value,
-            irc_proto:say(Sock, Channel, Nickname ++ "'s " ++ Noun ++ " is " ++ Url);
+            irc_proto:say(Sock, Channel, Nickname ++ "'s " ++ Noun ++ " is " ++ Url),
+            ok;
         nil ->
-            irc_proto:say(Sock, Channel, Nickname ++ " has not set their " ++ Noun ++ " yet");
+            irc_proto:say(Sock, Channel, Nickname ++ " has not set their " ++ Noun ++ " yet"),
+            ok;
         {error, Reason} ->
-            io:format("Error getting ~p for ~p: ~p~n", [Key, Nickname, Reason])
+            io:format("Error getting ~p for ~p: ~p~n", [Key, Nickname, Reason]),
+            error
     end.
 
 
 put_property(Type, Nickname, Value) ->
     case lists:member(Type, ["web", "github", "stack"]) of
-        true -> zane_db:insert(Type, Nickname, Value);
-        false -> io:format("Invalid key for ~p: ~p. Ignoring.~n", [Nickname, Type])
+        true ->
+            case zane_db:insert(Type, Nickname, Value) of
+                ok -> ok;
+                {error, Reason} ->
+                    io:format("Error saving ~p for ~p: ~p~n", [Type, Nickname, Reason]),
+                    error
+            end;
+        false ->
+            io:format("Invalid key for ~p: ~p. Ignoring.~n", [Nickname, Type]),
+            error
     end.
