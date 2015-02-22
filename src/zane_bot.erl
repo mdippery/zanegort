@@ -36,7 +36,8 @@ process_line(Sock, Client, [From,"PRIVMSG",_Channel|Args]) ->
     [MaybeCmd|Rest] = Args,
     case string:substr(MaybeCmd, 1, 1) of
         CmdPrefix ->
-            RawCmd = string:substr(MaybeCmd, 1),
+            PrefixLen = string:len(CmdPrefix),
+            RawCmd = string:substr(MaybeCmd, PrefixLen),
             zane_cmd:handle(Sock, Client, Nick, RawCmd, Rest);
         _ -> ok
     end;
