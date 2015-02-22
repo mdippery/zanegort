@@ -2,20 +2,12 @@
 -include("zane.hrl").
 
 -export([
-    getenv/2,
     is_command/1, is_command/2,
     extract_command/1, extract_command/2
 ]).
 
 
-getenv(Key, Default) ->
-    case os:getenv(Key)  of
-        false -> Default;
-        Value -> Value
-    end.
-
-
-cmd_prefix() -> getenv("ZANE_CMD_PREFIX", ?DEFAULT_CMD_PREFIX).
+cmd_prefix() -> os_utils:getenv("ZANE_CMD_PREFIX", ?DEFAULT_CMD_PREFIX).
 
 
 is_command(MaybeCmd) -> is_command(MaybeCmd, cmd_prefix()).

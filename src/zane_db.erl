@@ -2,7 +2,7 @@
 -export([insert/3, find/2]).
 
 
-db_base_dir() -> zane_utils:getenv("ZANE_DB_DIR", "/tmp").
+db_base_dir() -> os_utils:getenv("ZANE_DB_DIR", "/tmp").
 
 
 db_path(Type) -> filename:join(db_base_dir(), Type).
