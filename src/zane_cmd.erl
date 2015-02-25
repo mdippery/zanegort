@@ -31,7 +31,7 @@ handle(Sock, #irc_client{channel=Channel}, _Nick, "stack", [Nickname|_Rest]) ->
     Noun = "Stack Overflow profile",
     get_property_or_error(Sock, Channel, Nickname, "stack", Prefix, Noun);
 
-handle(Sock, #irc_client{channel=Channel}, _Nick, "!help", _Args) ->
+handle(Sock, #irc_client{channel=Channel}, _Nick, "help", _Args) ->
     Msg = "Command help is available at " ++ ?HELP_URL,
     irc_proto:say(Sock, Channel, Msg);
 
