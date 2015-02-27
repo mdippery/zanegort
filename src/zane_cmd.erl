@@ -31,6 +31,11 @@ handle(Sock, #irc_client{channel=Channel}, _Nick, "stack", [Nickname|_Rest]) ->
     Noun = "Stack Overflow profile",
     get_property_or_error(Sock, Channel, Nickname, "stack", Prefix, Noun);
 
+handle(Sock, #irc_client{channel=Channel}, _Nick, "reddit", [Nickname|_Rest]) ->
+    Prefix = "http://reddit.com/user/",
+    Noun = "Reddit profile",
+    get_property_or_error(Sock, Channel, Nickname, "reddit", Prefix, Noun);
+
 handle(Sock, #irc_client{channel=Channel}, _Nick, "help", _Args) ->
     Msg = "Command help is available at " ++ ?HELP_URL,
     irc_proto:say(Sock, Channel, Msg);
@@ -55,7 +60,7 @@ get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
 
 
 put_property(Sock, Channel, Type, Nickname, Value) ->
-    case lists:member(Type, ["web", "github", "stack"]) of
+    case lists:member(Type, ["web", "github", "stack", "reddit"]) of
         true ->
             case zane_db:insert(Type, Nickname, Value) of
                 ok ->
