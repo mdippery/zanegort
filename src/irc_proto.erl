@@ -1,5 +1,13 @@
 -module(irc_proto).
--export([pong/2, nick/2, user/2, join/2, quit/2, say/3]).
+-export([
+    pong/2,
+    nick/2,
+    user/2,
+    join/2,
+    quit/2,
+    say/3,
+    ctcp/3
+]).
 
 
 pong(Sock, Resp) -> send(Sock, "PONG " ++ Resp).
@@ -18,6 +26,12 @@ quit(Sock, Msg) -> send(Sock, "QUIT :" ++ Msg).
 
 
 say(Sock, To, Msg) -> send(Sock, "PRIVMSG " ++ To ++ " :" ++ Msg).
+
+
+ctcp(Sock, To, Msg) -> notice(Sock, To, Msg).
+
+
+notice(Sock, To, Msg) -> send(Sock, "NOTICE " ++ To ++ " :" ++ Msg).
 
 
 send(Sock, Line) -> gen_tcp:send(Sock, Line ++ "\r\n").
