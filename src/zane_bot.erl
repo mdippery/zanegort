@@ -89,7 +89,7 @@ process_line(Sock, _Client, ["PING"|Rest]) ->
 
 process_line(Sock, Client, [From,"PRIVMSG",To|Args]) ->
     [MaybeCmd|Rest] = Args,
-    Nick = zane_irc:extract_nickname(From),
+    Nick = zane_utils:extract_nickname(From),
     case zane_utils:extract_command(MaybeCmd) of
         nil ->
             case zane_utils:extract_ctcp(Client, To, MaybeCmd) of

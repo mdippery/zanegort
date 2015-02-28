@@ -1,11 +1,17 @@
 -module(zane_utils).
 -include("zane.hrl").
 
--export([extract_command/1, extract_ctcp/3]).
+-export([extract_nickname/1, extract_command/1, extract_ctcp/3]).
 
 -define(CMD_PREFIX, os_utils:getenv("ZANE_CMD_PREFIX", ?DEFAULT_CMD_PREFIX)).
 -define(CTCP_CMDS, ["FINGER", "VERSION", "SOURCE", "USERINFO", "CLIENTINFO",
                     "ERRMSG", "PING", "TIME"]).
+
+
+extract_nickname(Username) ->
+    [User|_] = string:tokens(Username, "@"),
+    [From|_] = string:tokens(User, "!"),
+    From.
 
 
 extract_command(RawCmd) -> extract_command(RawCmd, ?CMD_PREFIX).
