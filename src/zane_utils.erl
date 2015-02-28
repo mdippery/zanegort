@@ -19,8 +19,9 @@ extract_command(RawCmd, CmdPrefix) ->
 
 
 extract_ctcp(Client, To, MaybeCtcp) ->
-    case is_ctcp(Client, To, MaybeCtcp) of
-        true -> MaybeCtcp;
+    Clean = zane_string:remove_001(MaybeCtcp),
+    case is_ctcp(Client, To, Clean) of
+        true -> Clean;
         false -> nil
     end.
 
