@@ -21,7 +21,7 @@ start_link(Host, Port, Nickname, Channel) ->
 
 
 stop() ->
-    gen_server:call(?SRV, disconnect).
+    gen_server:cast(?SRV, disconnect).
 
 
 
@@ -37,15 +37,15 @@ init([Host, Port, Nickname, Channel]) ->
     {ok, {Sock, Client}}.
 
 
-handle_call(disconnect, _From, {Sock, Client}) ->
-    irc_proto:quit(Sock, ?QUIT),
-    gen_tcp:close(Sock),
-    {stop, normal, ok, {Sock, Client}};
-
 handle_call(Msg, From, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message from ~p: ~p", [From, Msg]),
     {noreply, State}.
 
+
+handle_cast(disconnect, {Sock, Client}) ->
+    irc_proto:quit(Sock, ?QUIT),
+    gen_tcp:close(Sock),
+    {stop, normal, {Sock, Client}};
 
 handle_cast(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
