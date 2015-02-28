@@ -39,7 +39,7 @@ init([Host, Port, Nickname, Channel]) ->
 handle_call(disconnect, _From, [Sock|Rest]) ->
     irc_proto:quit(Sock, "User terminated connection"),
     gen_tcp:close(Sock),
-    {stop, stopped, ok, [Sock|Rest]};
+    {stop, normal, ok, [Sock|Rest]};
 
 handle_call(Msg, From, State) ->
     io:format("zane_bot: Ignoring unknown message ~p from ~p~n", [Msg, From]),
@@ -67,7 +67,7 @@ handle_info(Msg, State) ->
 
 
 terminate(Reason, _State) ->
-    io:format("zane_bot: Terminating due to ~p~n", [Reason]),
+    io:format("zane_bot: Terminating (~p)~n", [Reason]),
     ok.
 
 
