@@ -13,6 +13,7 @@
 ]).
 
 -define(SRV, ?MODULE).
+-define(QUIT, "User terminated connection").
 
 
 start_link(Host, Port, Nickname, Channel) ->
@@ -37,7 +38,7 @@ init([Host, Port, Nickname, Channel]) ->
 
 
 handle_call(disconnect, _From, {Sock, Client}) ->
-    irc_proto:quit(Sock, "User terminated connection"),
+    irc_proto:quit(Sock, ?QUIT),
     gen_tcp:close(Sock),
     {stop, normal, ok, {Sock, Client}};
 
