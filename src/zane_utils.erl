@@ -6,11 +6,10 @@
     extract_command/1, extract_command/2
 ]).
 
+-define(CMD_PREFIX, os_utils:getenv("ZANE_CMD_PREFIX", ?DEFAULT_CMD_PREFIX)).
 
-cmd_prefix() -> os_utils:getenv("ZANE_CMD_PREFIX", ?DEFAULT_CMD_PREFIX).
 
-
-is_command(MaybeCmd) -> is_command(MaybeCmd, cmd_prefix()).
+is_command(MaybeCmd) -> is_command(MaybeCmd, ?CMD_PREFIX).
 
 
 is_command(MaybeCmd, CmdPrefix) ->
@@ -20,7 +19,7 @@ is_command(MaybeCmd, CmdPrefix) ->
     end.
 
 
-extract_command(RawCmd) -> extract_command(RawCmd, cmd_prefix()).
+extract_command(RawCmd) -> extract_command(RawCmd, ?CMD_PREFIX).
 
 
 extract_command(RawCmd, CmdPrefix) ->
