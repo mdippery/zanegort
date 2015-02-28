@@ -88,13 +88,12 @@ process_line(Sock, _Client, ["PING"|Rest]) ->
 
 process_line(Sock, Client, [From,"PRIVMSG",_Channel|Args]) ->
     [MaybeCmd|Rest] = Args,
-    case zane_utils:is_command(MaybeCmd) of
-        true ->
+    case zane_utils:extract_command(MaybeCmd) of
+        nil ->
+            ok;
+        Cmd ->
             Nick = zane_irc:extract_nickname(From),
-            Cmd = zane_utils:extract_command(MaybeCmd),
-            zane_cmd:handle(Sock, Client, Nick, Cmd, Rest);
-        false ->
-            ok
+            zane_cmd:handle(Sock, Client, Nick, Cmd, Rest)
     end;
 
 process_line(Sock, _Client, [_,"KICK",Channel|Args]) ->
