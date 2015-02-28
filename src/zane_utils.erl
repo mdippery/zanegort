@@ -4,6 +4,8 @@
 -export([extract_command/1, extract_ctcp/3]).
 
 -define(CMD_PREFIX, os_utils:getenv("ZANE_CMD_PREFIX", ?DEFAULT_CMD_PREFIX)).
+-define(CTCP_CMDS, ["FINGER", "VERSION", "SOURCE", "USERINFO", "CLIENTINFO",
+                    "ERRMSG", "PING", "TIME"]).
 
 
 extract_command(RawCmd) -> extract_command(RawCmd, ?CMD_PREFIX).
@@ -16,9 +18,9 @@ extract_command(RawCmd, CmdPrefix) ->
     end.
 
 
-extract_ctcp(Client, To, MaybeCtcp=[_|Rest]) ->
+extract_ctcp(Client, To, MaybeCtcp) ->
     case is_ctcp(Client, To, MaybeCtcp) of
-        true -> Rest;
+        true -> MaybeCtcp;
         false -> nil
     end.
 
@@ -30,5 +32,5 @@ is_command(MaybeCmd, CmdPrefix) ->
     end.
 
 
-is_ctcp(#irc_client{nickname=Nickname}, Nickname, [P|_Rest]) when P =:= $: -> true;
-is_ctcp(_Client, _Nickname, _Command) -> false.
+is_ctcp(#irc_client{nickname=Nickname}, Nickname, Cmd) -> lists:member(Cmd, ?CTCP_CMDS);
+is_ctcp(_Client, _Nickname, _Cmd) -> false.
