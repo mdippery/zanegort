@@ -81,8 +81,8 @@ code_change(OldVsn, State, _Extra) ->
 %% ----------------------------------------------------------------------------
 
 
-process_line(Sock, Client, [_,"376"|_]) ->
-    irc_proto:join(Sock, Client#irc_client.channel);
+process_line(Sock, #irc_client{channel=Channel}, [_,"376"|_]) ->
+    irc_proto:join(Sock, Channel);
 
 process_line(Sock, _Client, ["PING"|Rest]) ->
     irc_proto:pong(Sock, Rest);
