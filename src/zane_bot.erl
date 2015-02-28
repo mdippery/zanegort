@@ -43,12 +43,12 @@ handle_call(disconnect, _From, {Sock, Client}) ->
     {stop, normal, ok, {Sock, Client}};
 
 handle_call(Msg, From, State) ->
-    zane_log:log(?MODULE, "Ignoring unknown message ~p from ~p", [Msg, From]),
+    zane_log:log(?MODULE, "Ignoring unknown message from ~p: ~p", [From, Msg]),
     {noreply, State}.
 
 
 handle_cast(Msg, State) ->
-    zane_log:log(?MODULE, "Ignoring unknown message ~p", [Msg]),
+    zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
     {noreply, State}.
 
 
@@ -62,7 +62,7 @@ handle_info({tcp_closed, _Sock}, State) ->
     {stop, tcp_closed, State};
 
 handle_info(Msg, State) ->
-    zane_log:log(?MODULE, "Ignoring unknown message ~p", [Msg]),
+    zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
     {noreply, State}.
 
 
