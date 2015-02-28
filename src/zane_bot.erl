@@ -17,7 +17,7 @@
 
 
 start_link(Host, Port, Nickname, Channel) ->
-    gen_server:start_link({local, ?SRV}, ?MODULE, [Host, Port, Nickname, Channel], []).
+    gen_server:start_link({local, ?SRV}, ?MODULE, {Host, Port, Nickname, Channel}, []).
 
 
 stop() ->
@@ -29,7 +29,7 @@ stop() ->
 %% ----------------------------------------------------------------------------
 
 
-init([Host, Port, Nickname, Channel]) ->
+init({Host, Port, Nickname, Channel}) ->
     Client = #irc_client{host=Host, port=Port, nickname=Nickname, channel=Channel},
     {ok, Sock} = gen_tcp:connect(Host, Port, [{packet, line}]),
     irc_proto:nick(Sock, Nickname),
