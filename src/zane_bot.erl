@@ -42,12 +42,12 @@ handle_call(disconnect, _From, [Sock|Rest]) ->
     {stop, normal, ok, [Sock|Rest]};
 
 handle_call(Msg, From, State) ->
-    io:format("zane_bot: Ignoring unknown message ~p from ~p~n", [Msg, From]),
+    zane_log:warning(?MODULE, "Ignoring unknown message ~p from ~p", [Msg, From]),
     {noreply, State}.
 
 
 handle_cast(Msg, State) ->
-    io:format("zane_bot: Ignoring unknown message ~p~n", [Msg]),
+    zane_log:warning(?MODULE, "Ignoring unknown message ~p", [Msg]),
     {noreply, State}.
 
 
@@ -57,22 +57,21 @@ handle_info({tcp, Sock, Data}, [Sock,Client|_Rest]) ->
     {noreply, [Sock, Client]};
 
 handle_info({tcp_closed, _Sock}, State) ->
-    io:format("zane_bot: Socket closed"),
+    zane_log:warning(?MODULE, "Socket closed"),
     {stop, tcp_closed, State};
 
 handle_info(Msg, State) ->
-    io:format("state = ~p~n", [State]),
-    io:format("zane_bot: Ignoring unknown message ~p~n", [Msg]),
+    zane_log:warning(?MODULE, "Ignoring unknown message ~p", [Msg]),
     {noreply, State}.
 
 
 terminate(Reason, _State) ->
-    io:format("zane_bot: Terminating (~p)~n", [Reason]),
+    zane_log:info(?MODULE, "Terminating (~p)", [Reason]),
     ok.
 
 
 code_change(OldVsn, State, _Extra) ->
-    io:format("zane_bot: Performing code upgrade from ~p~n", [OldVsn]),
+    zane_log:info(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
     {ok, State}.
 
 
@@ -99,7 +98,7 @@ process_line(Sock, Client, [From,"PRIVMSG",_Channel|Args]) ->
     end;
 
 process_line(Sock, _Client, [_,"KICK",Channel|Args]) ->
-    io:format("Kicked from ~p: ~p. Rejoining.~n", [Channel, Args]),
+    zane_log:info(?MODULE, "Kicked from ~p: ~p. Rejoining.", [Channel, Args]),
     timer:sleep(5000),
     irc_proto:join(Sock, Channel);
 
