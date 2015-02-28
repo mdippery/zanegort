@@ -31,4 +31,8 @@ zanegort currently responds to these commands:
 * `!reddit <nickname>`: Returns the Reddit account and URL associated with
   `nickname`.
 * `!help`: Shows a summary of available commands.
-* `!source`: URL to bot source code.
+
+zanegort also responds to the following `/ctcp` commands:
+
+* `VERSION`
+* `SOURCE`

@@ -2,8 +2,7 @@
 -export([handle/5]).
 -include("zane.hrl").
 
--define(SOURCE_URL, "https://github.com/mdippery/zanegort").
--define(HELP_URL, ?SOURCE_URL).
+-define(HELP_URL, "https://github.com/mdippery/zanegort").
 
 
 handle(Sock, #irc_client{channel=Channel}, Nick, "set", [Key,Value|Rest]) ->
@@ -11,10 +10,6 @@ handle(Sock, #irc_client{channel=Channel}, Nick, "set", [Key,Value|Rest]) ->
     % will be chopped in two, so reassemble before storing.
     Val = string:join([Value|Rest], ":"),
     put_property(Sock, Channel, Key, Nick, Val);
-
-handle(Sock, #irc_client{channel=Channel}, _Nick, "source", _Args) ->
-    Msg = "Source is available at " ++ ?SOURCE_URL,
-    irc_proto:say(Sock, Channel, Msg);
 
 handle(Sock, #irc_client{channel=Channel}, _Nick, "web", [Nickname|_Rest]) ->
     Prefix = "",
