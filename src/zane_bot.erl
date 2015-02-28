@@ -33,13 +33,13 @@ init([Host, Port, Nickname, Channel]) ->
     {ok, Sock} = gen_tcp:connect(Host, Port, [{packet, line}]),
     irc_proto:nick(Sock, Nickname),
     irc_proto:user(Sock, Nickname),
-    {ok, [Sock, Client]}.
+    {ok, {Sock, Client}}.
 
 
-handle_call(disconnect, _From, [Sock|Rest]) ->
+handle_call(disconnect, _From, {Sock, Client}) ->
     irc_proto:quit(Sock, "User terminated connection"),
     gen_tcp:close(Sock),
-    {stop, normal, ok, [Sock|Rest]};
+    {stop, normal, ok, {Sock, Client}};
 
 handle_call(Msg, From, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message ~p from ~p", [Msg, From]),
@@ -51,10 +51,10 @@ handle_cast(Msg, State) ->
     {noreply, State}.
 
 
-handle_info({tcp, Sock, Data}, [Sock,Client|_Rest]) ->
+handle_info({tcp, Sock, Data}, {Sock, Client}) ->
     Line = zane_string:strip(Data),
     process_line(Sock, Client, string:tokens(Line, " :")),
-    {noreply, [Sock, Client]};
+    {noreply, {Sock, Client}};
 
 handle_info({tcp_closed, _Sock}, State) ->
     zane_log:log(?MODULE, "Socket closed"),
