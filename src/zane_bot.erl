@@ -98,4 +98,9 @@ process_line(Sock, Client, [From,"PRIVMSG",_Channel|Args]) ->
             ok
     end;
 
+process_line(Sock, _Client, [_,"KICK",Channel|Args]) ->
+    io:format("Kicked from ~p: ~p. Rejoining.~n", [Channel, Args]),
+    timer:sleep(5000),
+    irc_proto:join(Sock, Channel);
+
 process_line(_Sock, _Client, _Line) -> ok.
