@@ -3,6 +3,7 @@
 -include("zane.hrl").
 
 -export([start_link/4, stop/0]).
+-export([set_command_prefix/1]).
 -export([
     init/1,
     handle_call/3,
@@ -16,12 +17,19 @@
 -define(QUIT, "User terminated connection").
 
 
+-record(state, {client, sock, prefix=?DEFAULT_CMD_PREFIX}).
+
+
 start_link(Host, Port, Nickname, Channel) ->
     gen_server:start_link({local, ?SRV}, ?MODULE, {Host, Port, Nickname, Channel}, []).
 
 
 stop() ->
     gen_server:cast(?SRV, disconnect).
+
+
+set_command_prefix(NewPrefix) ->
+    gen_server:cast(?SRV, {set_cmd_prefix, NewPrefix}).
 
 
 
@@ -34,7 +42,8 @@ init({Host, Port, Nickname, Channel}) ->
     {ok, Sock} = gen_tcp:connect(Host, Port, [{packet, line}]),
     irc_proto:nick(Sock, Nickname),
     irc_proto:user(Sock, Nickname),
-    {ok, {Sock, Client}}.
+    State = #state{client=Client, sock=Sock},
+    {ok, State}.
 
 
 handle_call(Msg, From, State) ->
@@ -42,20 +51,26 @@ handle_call(Msg, From, State) ->
     {noreply, State}.
 
 
-handle_cast(disconnect, {Sock, Client}) ->
+handle_cast(disconnect, State=#state{sock=Sock}) ->
     irc_proto:quit(Sock, ?QUIT),
     gen_tcp:close(Sock),
-    {stop, normal, {Sock, Client}};
+    {stop, normal, State};
+
+handle_cast({set_cmd_prefix, NewPrefix}, State) ->
+    OldPrefix = State#state.prefix,
+    zane_log:log(?MODULE, "Changing command prefix from ~p to ~p~n", [OldPrefix, NewPrefix]),
+    NewState = State#state{prefix=NewPrefix},
+    {noreply, NewState};
 
 handle_cast(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
     {noreply, State}.
 
 
-handle_info({tcp, Sock, Data}, {Sock, Client}) ->
+handle_info({tcp, Sock, Data}, State=#state{sock=Sock}) ->
     Line = zane_string:strip(Data),
-    process_line(Sock, Client, string:tokens(Line, " :")),
-    {noreply, {Sock, Client}};
+    process_line(State, string:tokens(Line, " :")),
+    {noreply, State};
 
 handle_info({tcp_closed, _Sock}, State) ->
     zane_log:log(?MODULE, "Socket closed"),
@@ -81,16 +96,16 @@ code_change(OldVsn, State, _Extra) ->
 %% ----------------------------------------------------------------------------
 
 
-process_line(Sock, #irc_client{channel=Channel}, [_,"376"|_]) ->
+process_line(#state{sock=Sock, client=#irc_client{channel=Channel}}, [_,"376"|_]) ->
     irc_proto:join(Sock, Channel);
 
-process_line(Sock, _Client, ["PING"|Rest]) ->
+process_line(#state{sock=Sock}, ["PING"|Rest]) ->
     irc_proto:pong(Sock, Rest);
 
-process_line(Sock, Client, [From,"PRIVMSG",To|Args]) ->
+process_line(#state{sock=Sock, client=Client, prefix=Prefix}, [From,"PRIVMSG",To|Args]) ->
     [MaybeCmd|Rest] = Args,
     Nick = extract_nickname(From),
-    case zane_cmd:extract_command(MaybeCmd) of
+    case zane_cmd:extract_command(MaybeCmd, Prefix) of
         nil ->
             case zane_ctcp:extract_ctcp(Client, To, MaybeCmd) of
                 nil -> ok;
@@ -100,12 +115,12 @@ process_line(Sock, Client, [From,"PRIVMSG",To|Args]) ->
             zane_cmd:handle(Sock, Client, Nick, Cmd, Rest)
     end;
 
-process_line(Sock, _Client, [_,"KICK",Channel|Args]) ->
+process_line(#state{sock=Sock}, [_,"KICK",Channel|Args]) ->
     zane_log:log(?MODULE, "Kicked from ~p: ~p. Rejoining.", [Channel, Args]),
     timer:sleep(5000),
     irc_proto:join(Sock, Channel);
 
-process_line(_Sock, _Client, _Line) -> ok.
+process_line(_State, _Line) -> ok.
 
 
 extract_nickname(Username) ->
