@@ -86,6 +86,13 @@ terminate(Reason, _State) ->
     ok.
 
 
+code_change(OldVsn, {Sock, Client}, _Extra) ->
+    zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
+    zane_log:log(?MODULE, "Updating gen_server state"),
+    State = #state{sock=Sock, client=Client},
+    zane_log:log(?MODULE, "Command prefix is now ~p", [State#state.prefix]),
+    {ok, State};
+
 code_change(OldVsn, State, _Extra) ->
     zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
     {ok, State}.
