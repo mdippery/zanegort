@@ -1,7 +1,9 @@
 -module(zane_cmd).
--export([handle/5]).
 -include("zane.hrl").
 
+-export([handle/5, extract_command/1]).
+
+-define(CMD_PREFIX, os_utils:getenv("ZANE_CMD_PREFIX", ?DEFAULT_CMD_PREFIX)).
 -define(HELP_URL, "https://github.com/mdippery/zanegort").
 
 
@@ -37,6 +39,23 @@ handle(Sock, #irc_client{channel=Channel}, _Nick, "help", _Args) ->
 
 handle(_Sock, _Client, _Nick, Other, Args) ->
     zane_log:log(?MODULE, "Invalid cmd: ~p ~p. Ignoring.", [Other, Args]).
+
+
+extract_command(RawCmd) -> extract_command(RawCmd, ?CMD_PREFIX).
+
+
+extract_command(RawCmd, CmdPrefix) ->
+    case is_command(RawCmd, CmdPrefix) of
+        true -> string:substr(RawCmd, string:len(CmdPrefix)+1);
+        false -> nil
+    end.
+
+
+is_command(MaybeCmd, CmdPrefix) ->
+    case string:substr(MaybeCmd, 1, string:len(CmdPrefix)) of
+        CmdPrefix -> true;
+        _ -> false
+    end.
 
 
 get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->

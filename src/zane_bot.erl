@@ -89,10 +89,10 @@ process_line(Sock, _Client, ["PING"|Rest]) ->
 
 process_line(Sock, Client, [From,"PRIVMSG",To|Args]) ->
     [MaybeCmd|Rest] = Args,
-    Nick = zane_utils:extract_nickname(From),
-    case zane_utils:extract_command(MaybeCmd) of
+    Nick = extract_nickname(From),
+    case zane_cmd:extract_command(MaybeCmd) of
         nil ->
-            case zane_utils:extract_ctcp(Client, To, MaybeCmd) of
+            case zane_ctcp:extract_ctcp(Client, To, MaybeCmd) of
                 nil -> ok;
                 Ctcp -> zane_ctcp:handle(Sock, Nick, Ctcp)
             end;
@@ -106,3 +106,9 @@ process_line(Sock, _Client, [_,"KICK",Channel|Args]) ->
     irc_proto:join(Sock, Channel);
 
 process_line(_Sock, _Client, _Line) -> ok.
+
+
+extract_nickname(Username) ->
+    [User|_] = string:tokens(Username, "@"),
+    [From|_] = string:tokens(User, "!"),
+    From.
