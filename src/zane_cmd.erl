@@ -1,56 +1,71 @@
 -module(zane_cmd).
 -include("zane.hrl").
 
--export([handle/5, extract_command/2]).
+-export([handle/5]).
+-export([normalize_listener/1]).
 
 -define(HELP_URL, "https://github.com/mdippery/zanegort").
 
 
-handle(Sock, #irc_client{channel=Channel}, Nick, "set", [Key,Value|Rest]) ->
-    % Due to the way lines are parsed, URLs beginning with "http://"
-    % will be chopped in two, so reassemble before storing.
-    Val = string:join([Value|Rest], ":"),
-    put_property(Sock, Channel, Key, Nick, Val);
+handle(Sock, #irc_client{channel=Channel, nickname=Nickname}, From, Channel, [Listener|Args]) ->
+    case normalize_listener(Listener) of
+        Nickname ->
+            dispatch(Sock, Channel, From, Args);
+        _ ->
+            nil
+    end;
 
-handle(Sock, #irc_client{channel=Channel}, _Nick, "web", [Nickname|_Rest]) ->
-    Prefix = "",
-    Noun = "website",
-    get_property_or_error(Sock, Channel, Nickname, "web", Prefix, Noun);
+handle(_Sock, _Client, _From, _To, _Args) ->
+    nil.
 
-handle(Sock, #irc_client{channel=Channel}, _Nick, "github", [Nickname|_Rest]) ->
+
+dispatch(Sock, To, _From, ["web","for",Nickname]) ->
+    get_property_or_error(Sock, To, Nickname, "web", "", "website");
+
+dispatch(Sock, To, _From, ["github","for",Nickname]) ->
     Prefix = "https://github.com/",
     Noun = "GitHub profile",
-    get_property_or_error(Sock, Channel, Nickname, "github", Prefix, Noun);
+    get_property_or_error(Sock, To, Nickname, "github", Prefix, Noun);
 
-handle(Sock, #irc_client{channel=Channel}, _Nick, "stack", [Nickname|_Rest]) ->
+dispatch(Sock, To, _From, ["stack","for",Nickname]) ->
     Prefix = "http://stackoverflow.com/users/",
     Noun = "Stack Overflow profile",
-    get_property_or_error(Sock, Channel, Nickname, "stack", Prefix, Noun);
+    get_property_or_error(Sock, To, Nickname, "stack", Prefix, Noun);
 
-handle(Sock, #irc_client{channel=Channel}, _Nick, "reddit", [Nickname|_Rest]) ->
+dispatch(Sock, To, _From, ["reddit","for",Nickname]) ->
     Prefix = "http://reddit.com/user/",
     Noun = "Reddit profile",
-    get_property_or_error(Sock, Channel, Nickname, "reddit", Prefix, Noun);
+    get_property_or_error(Sock, To, Nickname, "reddit", Prefix, Noun);
 
-handle(Sock, #irc_client{channel=Channel}, _Nick, "help", _Args) ->
+dispatch(Sock, To, From, ["set","web","to",Url]) ->
+    put_property(Sock, To, "web", From, Url);
+
+dispatch(Sock, To, From, ["set","github","to",Username]) ->
+    put_property(Sock, To, "github", From, Username);
+
+dispatch(Sock, To, From, ["set","stack","to",UserId]) ->
+    put_property(Sock, To, "stack", From, UserId);
+
+dispatch(Sock, To, From, ["set","reddit","to",Username]) ->
+    put_property(Sock, To, "reddit", From, Username);
+
+dispatch(Sock, To, _From, ["help"]) ->
     Msg = "Command help is available at " ++ ?HELP_URL,
-    irc_proto:say(Sock, Channel, Msg);
+    irc_proto:say(Sock, To, Msg);
 
-handle(_Sock, _Client, _Nick, Other, Args) ->
-    zane_log:log(?MODULE, "Invalid cmd: ~p ~p. Ignoring.", [Other, Args]).
-
-
-extract_command(RawCmd, CmdPrefix) ->
-    case is_command(RawCmd, CmdPrefix) of
-        true -> string:substr(RawCmd, string:len(CmdPrefix)+1);
-        false -> nil
-    end.
+dispatch(Sock, To, _From, _Args) ->
+    irc_proto:say(Sock, To, "no thanks!").
 
 
-is_command(MaybeCmd, CmdPrefix) ->
-    case string:substr(MaybeCmd, 1, string:len(CmdPrefix)) of
-        CmdPrefix -> true;
-        _ -> false
+normalize_listener("zane") ->
+    "zanegort";
+normalize_listener("zane,") ->
+    "zanegort";
+normalize_listener(Nickname) ->
+    L = string:len(Nickname),
+    case string:rchr(Nickname, $,) of
+        L -> string:substr(Nickname, 1, L-1);
+        _ -> Nickname
     end.
 
 
@@ -61,26 +76,22 @@ get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
             irc_proto:say(Sock, Channel, Nickname ++ "'s " ++ Noun ++ " is " ++ Url),
             ok;
         nil ->
-            irc_proto:say(Sock, Channel, Nickname ++ " has not set their " ++ Noun ++ " yet"),
+            irc_proto:say(Sock, Channel, "i don't know!"),
             ok;
         {error, Reason} ->
             zane_log:log(?MODULE, "Error getting ~p for ~p: ~p", [Key, Nickname, Reason]),
+            irc_proto:say(Sock, Channel, "i don't know!"),
             error
     end.
 
 
 put_property(Sock, Channel, Type, Nickname, Value) ->
-    case lists:member(Type, ["web", "github", "stack", "reddit"]) of
-        true ->
-            case zane_db:insert(Type, Nickname, Value) of
-                ok ->
-                    irc_proto:say(Sock, Channel, "Set " ++ Type ++ " for " ++ Nickname),
-                    ok;
-                {error, Reason} ->
-                    zane_log:log(?MODULE, "Error saving ~p for ~p: ~p", [Type, Nickname, Reason]),
-                    error
-            end;
-        false ->
-            zane_log:log(?MODULE, "Invalid key for ~p: ~p. Ignoring.", [Nickname, Type]),
+    case zane_db:insert(Type, Nickname, Value) of
+        ok ->
+            irc_proto:say(Sock, Channel, "Set " ++ Type ++ " for " ++ Nickname ++ " to " ++ Value),
+            ok;
+        {error, Reason} ->
+            zane_log:log(?MODULE, "Error saving ~p for ~p: ~p", [Type, Nickname, Reason]),
+            irc_proto:say("damn it"),
             error
     end.

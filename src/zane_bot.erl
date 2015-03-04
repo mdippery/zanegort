@@ -3,7 +3,6 @@
 -include("zane.hrl").
 
 -export([start_link/4, stop/0]).
--export([set_command_prefix/1]).
 -export([
     init/1,
     handle_call/3,
@@ -17,7 +16,7 @@
 -define(QUIT, "User terminated connection").
 
 
--record(state, {client, sock, prefix=?DEFAULT_CMD_PREFIX}).
+-record(state, {client, sock}).
 
 
 start_link(Host, Port, Nickname, Channel) ->
@@ -26,10 +25,6 @@ start_link(Host, Port, Nickname, Channel) ->
 
 stop() ->
     gen_server:cast(?SRV, disconnect).
-
-
-set_command_prefix(NewPrefix) ->
-    gen_server:cast(?SRV, {set_cmd_prefix, NewPrefix}).
 
 
 
@@ -56,12 +51,6 @@ handle_cast(disconnect, State=#state{sock=Sock}) ->
     gen_tcp:close(Sock),
     {stop, normal, State};
 
-handle_cast({set_cmd_prefix, NewPrefix}, State) ->
-    OldPrefix = State#state.prefix,
-    zane_log:log(?MODULE, "Changing command prefix from ~p to ~p~n", [OldPrefix, NewPrefix]),
-    NewState = State#state{prefix=NewPrefix},
-    {noreply, NewState};
-
 handle_cast(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
     {noreply, State}.
@@ -86,13 +75,6 @@ terminate(Reason, _State) ->
     ok.
 
 
-code_change(OldVsn, {Sock, Client}, _Extra) ->
-    zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
-    zane_log:log(?MODULE, "Updating gen_server state"),
-    State = #state{sock=Sock, client=Client},
-    zane_log:log(?MODULE, "Command prefix is now ~p", [State#state.prefix]),
-    {ok, State};
-
 code_change(OldVsn, State, _Extra) ->
     zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
     {ok, State}.
@@ -109,19 +91,11 @@ process_line(#state{sock=Sock, client=#irc_client{channel=Channel}}, [_,"376"|_]
 process_line(#state{sock=Sock}, ["PING"|Rest]) ->
     irc_proto:pong(Sock, Rest);
 
-process_line(#state{sock=Sock, client=Client, prefix=Prefix}, [From,"PRIVMSG",To|Args]) ->
-    [MaybeCmd|Rest] = Args,
-    Nick = extract_nickname(From),
-    case zane_cmd:extract_command(MaybeCmd, Prefix) of
-        nil ->
-            case zane_ctcp:extract_ctcp(Client, To, MaybeCmd) of
-                nil -> ok;
-                Ctcp -> zane_ctcp:handle(Sock, Nick, Ctcp)
-            end;
-        Cmd ->
-            zane_log:log(?MODULE, "Responding to cmd: ~p ~p", [Cmd, Rest]),
-            zane_cmd:handle(Sock, Client, Nick, Cmd, Rest)
-    end;
+process_line(#state{sock=Sock, client=Client}, [Sender,"PRIVMSG",To|Args]) ->
+    From = extract_nickname(Sender),
+    zane_cmd:handle(Sock, Client, From, To, Args),
+    zane_ctcp:handle(Sock, Client, From, To, Args),
+    ok;
 
 process_line(#state{sock=Sock}, [_,"KICK",Channel|Args]) ->
     zane_log:log(?MODULE, "Kicked from ~p: ~p. Rejoining.", [Channel, Args]),
