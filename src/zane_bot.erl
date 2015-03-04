@@ -40,6 +40,7 @@ init({Host, Port, Nickname, Channel}) ->
     {ok, EventPid} = gen_event:start_link(),
     gen_event:add_handler(EventPid, plug_cmd, {Client, Sock}),
     gen_event:add_handler(EventPid, plug_ctcp, {Client, Sock}),
+    gen_event:add_handler(EventPid, plug_webdev, {Client, Sock}),
     State = #state{client=Client, sock=Sock, events=EventPid},
     {ok, State}.
 
