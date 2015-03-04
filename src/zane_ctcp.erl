@@ -1,4 +1,5 @@
 -module(zane_ctcp).
+-behaviour(zane_plugin).
 -include("zane.hrl").
 
 -export([handle/5]).
