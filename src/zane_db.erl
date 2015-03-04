@@ -1,11 +1,10 @@
 -module(zane_db).
 -export([insert/3, find/2]).
 
+-define(DB_BASE_DIR, os_utils:getenv("ZANE_DB_DIR", "/tmp")).
 
-db_base_dir() -> os_utils:getenv("ZANE_DB_DIR", "/tmp").
 
-
-db_path(Type) -> filename:join(db_base_dir(), Type).
+db_path(Type) -> filename:join(?DB_BASE_DIR, Type).
 
 
 insert(Type, Nickname, Value) ->
