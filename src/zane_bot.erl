@@ -16,7 +16,7 @@
 -define(QUIT, "User terminated connection").
 
 
--record(state, {client, sock}).
+-record(state, {client, sock, events}).
 
 
 start_link(Host, Port, Nickname, Channel) ->
@@ -37,7 +37,8 @@ init({Host, Port, Nickname, Channel}) ->
     {ok, Sock} = gen_tcp:connect(Host, Port, [{packet, line}]),
     irc_proto:nick(Sock, Nickname),
     irc_proto:user(Sock, Nickname),
-    State = #state{client=Client, sock=Sock},
+    {ok, EventPid} = gen_event:start_link(),
+    State = #state{client=Client, sock=Sock, events=EventPid},
     {ok, State}.
 
 
@@ -104,11 +105,9 @@ process_line(#state{client=#irc_client{nickname=Nickname, channel=Channel}}, [_,
 process_line(#state{sock=Sock}, ["PING"|Rest]) ->
     irc_proto:pong(Sock, Rest);
 
-process_line(#state{sock=Sock, client=Client}, [Sender,"PRIVMSG",To|Args]) ->
+process_line(#state{events=Events}, [Sender,"PRIVMSG",To|Args]) ->
     From = extract_nickname(Sender),
-    zane_cmd:handle(Sock, Client, From, To, Args),
-    zane_ctcp:handle(Sock, Client, From, To, Args),
-    ok;
+    gen_event:notify(Events, {privmsg, From, To, Args});
 
 process_line(#state{sock=Sock}, [_,"KICK",Channel|Args]) ->
     zane_log:log(?MODULE, "Kicked from ~p: ~p. Rejoining.", [Channel, Args]),
