@@ -1,4 +1,4 @@
--module(zane_ctcp).
+-module(plug_ctcp).
 -include("zane.hrl").
 
 -export([

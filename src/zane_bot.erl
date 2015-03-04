@@ -38,8 +38,8 @@ init({Host, Port, Nickname, Channel}) ->
     irc_proto:nick(Sock, Nickname),
     irc_proto:user(Sock, Nickname),
     {ok, EventPid} = gen_event:start_link(),
-    gen_event:add_handler(EventPid, zane_cmd, {Client, Sock}),
-    gen_event:add_handler(EventPid, zane_ctcp, {Client, Sock}),
+    gen_event:add_handler(EventPid, plug_cmd, {Client, Sock}),
+    gen_event:add_handler(EventPid, plug_ctcp, {Client, Sock}),
     State = #state{client=Client, sock=Sock, events=EventPid},
     {ok, State}.
 

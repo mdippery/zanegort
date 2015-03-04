@@ -1,4 +1,4 @@
--module(zane_cmd).
+-module(plug_cmd).
 -behaviour(gen_event).
 -include("zane.hrl").
 
