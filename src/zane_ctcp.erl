@@ -4,10 +4,6 @@
 -export([handle/5]).
 
 
--define(VERSION, "zanegort v1.0").
--define(SOURCE, "https://github.com/mdippery/zanegort").
-
-
 handle(Sock, #irc_client{nickname=Nickname}, From, Nickname, DirtyArgs) ->
     Args = lists:map(fun zane_string:remove_001/1, DirtyArgs),
     dispatch(Sock, From, Args);
