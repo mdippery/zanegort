@@ -3,7 +3,7 @@ channels, particularly programming-oriented ones.
 
 ## Building
 
-    $ erl -pa ebin -make
+    $ erl -make
 
 ## Usage
 
