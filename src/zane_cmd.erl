@@ -1,23 +1,69 @@
 -module(zane_cmd).
+-behaviour(gen_event).
 -include("zane.hrl").
 
--export([handle/5]).
--export([normalize_listener/1]).
+-export([
+    init/1,
+    handle_event/2,
+    handle_call/2,
+    handle_info/2,
+    code_change/3,
+    terminate/2
+]).
+
+-record(state, {client, sock}).
 
 -define(HELP_URL, "https://github.com/mdippery/zanegort/wiki/Help").
 
 
-handle(Sock, #irc_client{channel=Channel, nickname=Nickname}, From, Channel, [Listener|Args]) ->
+%% Behaviour: gen_event
+%% ----------------------------------------------------------------------------
+
+
+init({Client, Sock}) ->
+    {ok, #state{client=Client, sock=Sock}}.
+
+
+handle_event({privmsg, From, Channel, [Listener|Args]}, State=#state{sock=Sock, client=#irc_client{channel=Channel, nickname=Nickname}}) ->
     case normalize_listener(Listener) of
         Nickname ->
-            dispatch(Sock, Channel, From, Args);
+            dispatch(Sock, Channel, From, Args),
+            {ok, State};
         _ ->
-            nil
+            {ok, State}
     end;
 
-handle(_Sock, _Client, _From, _To, _Args) ->
-    nil.
+handle_event({privmsg, _From, _Channel, _Args}, State) ->
+    {ok, State};
 
+handle_event(Msg, State) ->
+    zane_log:log(?MODULE, "Ignoring unknown event: ~p", [Msg]),
+    {ok, State}.
+
+
+handle_call(Msg, State) ->
+    zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
+    {ok, ok, State}.
+
+
+handle_info(Msg, State) ->
+    zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
+    {ok, State}.
+
+
+terminate(Reason, _State) ->
+    zane_log:log(?MODULE, "Terminating (~p)", [Reason]),
+    ok.
+
+
+code_change(OldVsn, State, _Extra) ->
+    zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
+    {ok, State}.
+
+
+
+%% Private implementation
+%% ----------------------------------------------------------------------------
 
 dispatch(Sock, To, _From, ["web","for",Nickname]) ->
     get_property_or_error(Sock, To, Nickname, "web", "", "website");
