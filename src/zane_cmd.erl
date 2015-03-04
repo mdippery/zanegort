@@ -4,7 +4,7 @@
 -export([handle/5]).
 -export([normalize_listener/1]).
 
--define(HELP_URL, "https://github.com/mdippery/zanegort").
+-define(HELP_URL, "https://github.com/mdippery/zanegort/wiki/Help").
 
 
 handle(Sock, #irc_client{channel=Channel, nickname=Nickname}, From, Channel, [Listener|Args]) ->
