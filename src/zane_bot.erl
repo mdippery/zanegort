@@ -119,6 +119,7 @@ process_line(#state{sock=Sock, client=Client, prefix=Prefix}, [From,"PRIVMSG",To
                 Ctcp -> zane_ctcp:handle(Sock, Nick, Ctcp)
             end;
         Cmd ->
+            zane_log:log(?MODULE, "Responding to cmd: ~p ~p", [Cmd, Rest]),
             zane_cmd:handle(Sock, Client, Nick, Cmd, Rest)
     end;
 
