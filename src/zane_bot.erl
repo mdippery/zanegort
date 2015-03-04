@@ -93,6 +93,10 @@ code_change(OldVsn, State, _Extra) ->
 process_line(#state{sock=Sock, client=#irc_client{channel=Channel}}, [_,"376"|_]) ->
     irc_proto:join(Sock, Channel);
 
+process_line(#state{client=#irc_client{channel=Channel}}, [_,"473"|_]) ->
+    zane_log:log(?MODULE, "~p is invite-only", [Channel]),
+    gen_server:cast(?SRV, {disconnect, inviteonly, "aw :("});
+
 process_line(#state{client=#irc_client{nickname=Nickname, channel=Channel}}, [_,"474"|_]) ->
     zane_log:log(?MODULE, "~p is banned from ~p", [Nickname, Channel]),
     gen_server:cast(?SRV, {disconnect, banned, "aw :("});
