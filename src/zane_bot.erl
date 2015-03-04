@@ -51,6 +51,11 @@ handle_cast(disconnect, State=#state{sock=Sock}) ->
     gen_tcp:close(Sock),
     {stop, normal, State};
 
+handle_cast({disconnect, Reason, Quit}, State=#state{sock=Sock}) ->
+    irc_proto:quit(Sock, Quit),
+    gen_tcp:close(Sock),
+    {stop, {error, Reason}, State};
+
 handle_cast(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
     {noreply, State}.
@@ -87,6 +92,10 @@ code_change(OldVsn, State, _Extra) ->
 
 process_line(#state{sock=Sock, client=#irc_client{channel=Channel}}, [_,"376"|_]) ->
     irc_proto:join(Sock, Channel);
+
+process_line(#state{client=#irc_client{nickname=Nickname, channel=Channel}}, [_,"474"|_]) ->
+    zane_log:log(?MODULE, "~p is banned from ~p", [Nickname, Channel]),
+    gen_server:cast(?SRV, {disconnect, banned, "aw :("});
 
 process_line(#state{sock=Sock}, ["PING"|Rest]) ->
     irc_proto:pong(Sock, Rest);
