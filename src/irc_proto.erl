@@ -6,7 +6,7 @@
     join/2,
     quit/2,
     say/3,
-    ctcp/3
+    ctcp/4
 ]).
 
 
@@ -28,7 +28,12 @@ quit(Sock, Msg) -> send(Sock, "QUIT :" ++ Msg).
 say(Sock, To, Msg) -> send(Sock, "PRIVMSG " ++ To ++ " :" ++ Msg).
 
 
-ctcp(Sock, To, Msg) -> notice(Sock, To, <<1,Msg,1>>).
+ctcp(Sock, To, Action, Msg) when is_atom(Action) ->
+    ctcp(Sock, To, string:to_upper(atom_to_list(Action)), Msg);
+ctcp(Sock, To, Action, Msg) ->
+    UAction = string:to_upper(Action),
+    FullMsg = UAction ++ " " ++ Msg,
+    notice(Sock, To, <<1,FullMsg,1>>).
 
 
 notice(Sock, To, Msg) -> send(Sock, "NOTICE " ++ To ++ " :" ++ Msg).
