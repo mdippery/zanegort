@@ -21,9 +21,16 @@ init({Client, Sock}) ->
     {ok, #state{client=Client, sock=Sock}}.
 
 
-handle_event({privmsg, From, Nickname, DirtyArgs}, State=#state{sock=Sock, client=#irc_client{nickname=Nickname}}) ->
-    Args = lists:map(fun zane_string:remove_001/1, DirtyArgs),
-    dispatch(Sock, From, Args),
+handle_event({privmsg, From, Nickname, <<1,"SOURCE",1>>}, State=#state{sock=Sock, client=#irc_client{nickname=Nickname}}) ->
+    irc_proto:ctcp(Sock, From, ?SOURCE),
+    {ok, State};
+
+handle_event({privmsg, From, Nickname, <<1,"VERSION",1>>}, State=#state{sock=Sock, client=#irc_client{nickname=Nickname}}) ->
+    irc_proto:ctcp(Sock, From, ?VERSION),
+    {ok, State};
+
+handle_event({privmsg, From, Nickname, <<1,Cmd,1>>}, State=#state{client=#irc_client{nickname=Nickname}}) ->
+    zane_log:log(?MODULE, "Unrecognized CTCP from ~p: ~p", [From, Cmd]),
     {ok, State};
 
 handle_event({privmsg, _From, _Nickname, _Args}, State) ->
@@ -52,19 +59,3 @@ terminate(Reason, _State) ->
 code_change(OldVsn, State, _Extra) ->
     zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
     {ok, State}.
-
-
-
-%% Private implementation
-%% ----------------------------------------------------------------------------
-
-
-dispatch(Sock, From, ["VERSION"]) ->
-    irc_proto:ctcp(Sock, From, ?VERSION);
-
-dispatch(Sock, From, ["SOURCE"]) ->
-    irc_proto:ctcp(Sock, From, ?SOURCE);
-
-dispatch(_Sock, From, Args) ->
-    zane_log:log(?MODULE, "Unrecognized CTCP from ~p: ~p", [From, Args]),
-    nil.
