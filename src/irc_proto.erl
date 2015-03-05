@@ -33,7 +33,8 @@ ctcp(Sock, To, Action, Msg) when is_atom(Action) ->
 ctcp(Sock, To, Action, Msg) ->
     UAction = string:to_upper(Action),
     FullMsg = UAction ++ " " ++ Msg,
-    notice(Sock, To, <<1,FullMsg,1>>).
+    CtcpMsg = [1|FullMsg] ++ [1],
+    notice(Sock, To, CtcpMsg).
 
 
 notice(Sock, To, Msg) -> send(Sock, "NOTICE " ++ To ++ " :" ++ Msg).

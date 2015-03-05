@@ -21,19 +21,16 @@ init({Client, Sock}) ->
     {ok, #state{client=Client, sock=Sock}}.
 
 
-handle_event({privmsg, From, Nickname, <<1,"SOURCE",1>>}, State=#state{sock=Sock, client=#irc_client{nickname=Nickname}}) ->
-    irc_proto:ctcp(Sock, From, ?SOURCE),
-    {ok, State};
-
-handle_event({privmsg, From, Nickname, <<1,"VERSION",1>>}, State=#state{sock=Sock, client=#irc_client{nickname=Nickname}}) ->
-    irc_proto:ctcp(Sock, From, ?VERSION),
-    {ok, State};
-
-handle_event({privmsg, From, Nickname, <<1,Cmd,1>>}, State=#state{client=#irc_client{nickname=Nickname}}) ->
-    zane_log:log(?MODULE, "Unrecognized CTCP from ~p: ~p", [From, Cmd]),
-    {ok, State};
-
-handle_event({privmsg, _From, _Nickname, _Args}, State) ->
+handle_event({privmsg, From, Nickname, [Head|_]}, State=#state{sock=Sock, client=#irc_client{nickname=Nickname}}) ->
+    Cmd = string:strip(Head, both, 1),
+    case Cmd of
+        "SOURCE" ->
+            irc_proto:ctcp(Sock, From, source, ?SOURCE);
+        "VERSION" ->
+            irc_proto:ctcp(Sock, From, version, ?VERSION);
+        _ ->
+            zane_log:log(?MODULE, "Unrecognized CTCP command: ~p", [Cmd])
+    end,
     {ok, State};
 
 handle_event(Msg, State) ->
