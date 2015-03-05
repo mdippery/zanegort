@@ -27,11 +27,6 @@ handle_event({privmsg, _From, Channel, ["!eval"|_Args]}, State=#state{sock=Sock,
     irc_proto:say(Sock, Channel, "wrong! the answer is 42"),
     {ok, State};
 
-handle_event({privmsg, _From, Channel, ["!trivia"|_Args]}, State=#state{sock=Sock, client=#irc_client{channel=Channel}}) ->
-    timer:sleep(1500),
-    irc_proto:say(Sock, Channel, "catfact?"),
-    {ok, State};
-
 handle_event({privmsg, _From, _Channel, _Args}, State) ->
     {ok, State};
 
