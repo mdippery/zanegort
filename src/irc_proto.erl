@@ -28,7 +28,7 @@ quit(Sock, Msg) -> send(Sock, "QUIT :" ++ Msg).
 say(Sock, To, Msg) -> send(Sock, "PRIVMSG " ++ To ++ " :" ++ Msg).
 
 
-ctcp(Sock, To, Msg) -> notice(Sock, To, Msg).
+ctcp(Sock, To, Msg) -> notice(Sock, To, <<1,Msg,1>>).
 
 
 notice(Sock, To, Msg) -> send(Sock, "NOTICE " ++ To ++ " :" ++ Msg).
