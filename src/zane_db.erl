@@ -4,9 +4,7 @@
 
 db_base_dir() -> os_utils:getenv("ZANE_DB_DIR", "/tmp").
 
-
 db_path(Type) -> filename:join(db_base_dir(), Type).
-
 
 insert(Type, Nickname, Value) ->
     case find(Type, Nickname) of
@@ -19,7 +17,6 @@ insert(Type, Nickname, Value) ->
             file:write_file(Path, Line, [append])
     end.
 
-
 find(Type, Nickname) ->
     Path = db_path(Type),
     case file:open(Path, [read]) of
@@ -27,9 +24,7 @@ find(Type, Nickname) ->
         {error, Reason} -> {error, Reason}
     end.
 
-
 find_in_device(Device, Nickname) -> find_in_device(Device, Nickname, []).
-
 
 find_in_device(Device, Nickname, Acc) ->
     case io:get_line(Device, "") of
@@ -40,9 +35,7 @@ find_in_device(Device, Nickname, Acc) ->
             find_in_device(Device, Nickname, Acc ++ [Line])
     end.
 
-
 find_in_lines(_Nickname, []) -> nil;
-
 find_in_lines(Nickname, [Head|Rest]) ->
     [Owner,Value|_] = string:tokens(Head, ","),
     case Owner of

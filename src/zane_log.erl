@@ -9,7 +9,6 @@ log(Mod, Fmt, Args) ->
     Msg = io_lib:format(Fmt, Args),
     io:format("~s [~p] ~s~n", [Timestamp, Mod, Msg]).
 
-
 trace(_Mod, Fmt, Args) ->
     Msg = io_lib:format(Fmt, Args),
     io:format("~s~n", [Msg]).

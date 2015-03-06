@@ -16,7 +16,6 @@
 %% Behaviour: gen_event
 %% ----------------------------------------------------------------------------
 
-
 init({Client, Sock}) ->
     {ok, #state{client=Client, sock=Sock}}.
 
@@ -38,26 +37,21 @@ handle_event({privmsg, From, Nickname, [Head|_]}, State=#state{sock=Sock, client
             zane_log:log(?MODULE, "Unrecognized CTCP command: ~p", [Cmd])
     end,
     {ok, State};
-
 handle_event(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown event: ~p", [Msg]),
     {ok, State}.
-
 
 handle_call(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
     {ok, ok, State}.
 
-
 handle_info(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
     {ok, State}.
 
-
 terminate(Reason, _State) ->
     zane_log:log(?MODULE, "Terminating (~p)", [Reason]),
     ok.
-
 
 code_change(OldVsn, State, _Extra) ->
     zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),

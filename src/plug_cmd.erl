@@ -19,10 +19,8 @@
 %% Behaviour: gen_event
 %% ----------------------------------------------------------------------------
 
-
 init({Client, Sock}) ->
     {ok, #state{client=Client, sock=Sock}}.
-
 
 handle_event({privmsg, From, Channel, [Listener|Args]}, State=#state{sock=Sock, client=#irc_client{channel=Channel, nickname=Nickname}}) ->
     case normalize_listener(Listener) of
@@ -32,34 +30,27 @@ handle_event({privmsg, From, Channel, [Listener|Args]}, State=#state{sock=Sock, 
         _ ->
             {ok, State}
     end;
-
 handle_event({privmsg, _From, _Channel, _Args}, State) ->
     {ok, State};
-
 handle_event(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown event: ~p", [Msg]),
     {ok, State}.
-
 
 handle_call(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
     {ok, ok, State}.
 
-
 handle_info(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
     {ok, State}.
-
 
 terminate(Reason, _State) ->
     zane_log:log(?MODULE, "Terminating (~p)", [Reason]),
     ok.
 
-
 code_change(OldVsn, State, _Extra) ->
     zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
     {ok, State}.
-
 
 
 %% Private implementation
@@ -67,41 +58,31 @@ code_change(OldVsn, State, _Extra) ->
 
 dispatch(Sock, To, _From, ["web","for",Nickname]) ->
     get_property_or_error(Sock, To, Nickname, "web", "", "website");
-
 dispatch(Sock, To, _From, ["github","for",Nickname]) ->
     Prefix = "https://github.com/",
     Noun = "GitHub profile",
     get_property_or_error(Sock, To, Nickname, "github", Prefix, Noun);
-
 dispatch(Sock, To, _From, ["stack","for",Nickname]) ->
     Prefix = "http://stackoverflow.com/users/",
     Noun = "Stack Overflow profile",
     get_property_or_error(Sock, To, Nickname, "stack", Prefix, Noun);
-
 dispatch(Sock, To, _From, ["reddit","for",Nickname]) ->
     Prefix = "http://reddit.com/user/",
     Noun = "Reddit profile",
     get_property_or_error(Sock, To, Nickname, "reddit", Prefix, Noun);
-
 dispatch(Sock, To, From, ["set","web","to",Url]) ->
     put_property(Sock, To, "web", From, Url);
-
 dispatch(Sock, To, From, ["set","github","to",Username]) ->
     put_property(Sock, To, "github", From, Username);
-
 dispatch(Sock, To, From, ["set","stack","to",UserId]) ->
     put_property(Sock, To, "stack", From, UserId);
-
 dispatch(Sock, To, From, ["set","reddit","to",Username]) ->
     put_property(Sock, To, "reddit", From, Username);
-
 dispatch(Sock, To, _From, ["help"]) ->
     Msg = "Command help is available at " ++ ?HELP_URL,
     irc_proto:say(Sock, To, Msg);
-
 dispatch(Sock, To, _From, _Args) ->
     irc_proto:say(Sock, To, "no thanks!").
-
 
 normalize_listener("zane") ->
     "zanegort";
@@ -113,7 +94,6 @@ normalize_listener(Nickname) ->
         L -> string:substr(Nickname, 1, L-1);
         _ -> Nickname
     end.
-
 
 get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
     case zane_db:find(Key, Nickname) of
@@ -129,7 +109,6 @@ get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
             irc_proto:say(Sock, Channel, "i don't know!"),
             error
     end.
-
 
 put_property(Sock, Channel, Type, Nickname, Value) ->
     case zane_db:insert(Type, Nickname, Value) of
