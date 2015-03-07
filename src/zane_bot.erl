@@ -62,7 +62,7 @@ handle_info({tcp, Sock, Data}, State=#state{sock=Sock}) ->
     Line = zane_string:strip(Data),
     process_line(State, string:tokens(Line, " :")),
     {noreply, State};
-handle_info({tcp_closed, _Sock}, State) ->
+handle_info({tcp_closed, Sock}, State=#state{sock=Sock}) ->
     zane_log:log(?MODULE, "Socket closed"),
     {stop, tcp_closed, State};
 handle_info(Msg, State) ->
