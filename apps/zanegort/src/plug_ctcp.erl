@@ -37,6 +37,8 @@ handle_event({privmsg, From, Nickname, [Head|_]}, State=#state{sock=Sock, client
             zane_log:log(?MODULE, "Unrecognized CTCP command: ~p", [Cmd])
     end,
     {ok, State};
+handle_event({privmsg, _From, Channel, _Args}, State=#state{client=#irc_client{channel=Channel}}) ->
+    {ok, State};
 handle_event(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown event: ~p", [Msg]),
     {ok, State}.
