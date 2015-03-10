@@ -32,7 +32,8 @@ handle_event({privmsg, From, Nickname, [Head|_]}, State=#state{sock=Sock, client
         "SOURCE" ->
             irc_proto:ctcp(Sock, From, source, ?SOURCE);
         "VERSION" ->
-            irc_proto:ctcp(Sock, From, version, ?VERSION);
+            Version = io_lib:format("zanegort v~s", [zanegort_app:vsn()]),
+            irc_proto:ctcp(Sock, From, version, Version);
         _ ->
             zane_log:log(?MODULE, "Unrecognized CTCP command: ~p", [Cmd])
     end,
