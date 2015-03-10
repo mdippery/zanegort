@@ -3,7 +3,10 @@ channels, particularly programming-oriented ones.
 
 ## Building
 
-    $ erl -make
+You must have [rebar](https://github.com/rebar/rebar/#downloading) installed to
+compile zanegort.
+
+    $ rebar compile
 
 ## Usage
 
