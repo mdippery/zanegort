@@ -1,6 +1,6 @@
 -module(plug_cmd).
 -behaviour(gen_event).
--include("zane.hrl").
+-include("zanegort.hrl").
 
 -export([
     init/1,

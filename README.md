@@ -10,7 +10,7 @@ compile zanegort.
 
 ## Usage
 
-    $ erl -pa ebin
+    $ _rel/zanegort/bin/zanegort
     > zane_bot:start_link(Hostname, Port, Nickname, Channel).
     > zane_bot:stop().
 

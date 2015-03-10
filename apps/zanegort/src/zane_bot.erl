@@ -1,6 +1,6 @@
 -module(zane_bot).
 -behaviour(gen_server).
--include("zane.hrl").
+-include("zanegort.hrl").
 
 -export([start_link/4, stop/0]).
 -export([
