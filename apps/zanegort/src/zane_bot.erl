@@ -95,7 +95,8 @@ process_line(_State, [Sender,"PRIVMSG",To|Args]) ->
     From = extract_nickname(Sender),
     gen_event:notify(?EVENT_SRV, {privmsg, From, To, Args});
 process_line(#state{sock=Sock, client=#irc_client{nickname=Nickname}}, [_,"KICK",Channel,Nickname|Args]) ->
-    zane_log:log(?MODULE, "Kicked from ~p: ~p. Rejoining.", [Channel, Nickname, Args]),
+    Msg = string:join(Args, " "),
+    zane_log:log(?MODULE, "Kicked from ~p: ~p. Rejoining.", [Channel, Nickname, Msg]),
     timer:sleep(5000),
     irc_proto:join(Sock, Channel);
 process_line(_State, _Line) ->
