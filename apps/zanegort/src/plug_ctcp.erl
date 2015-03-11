@@ -20,23 +20,8 @@ init({Client, Sock}) ->
     {ok, #state{client=Client, sock=Sock}}.
 
 
-handle_event({privmsg, From, Nickname, [Head|_]}, State=#state{sock=Sock, client=#irc_client{nickname=Nickname}}) ->
-    Cmd = string:strip(Head, both, 1),
-    case Cmd of
-        Head ->
-            % If Cmd is the same as Head, then no characters were
-            % stripped. This means that the received message is
-            % not a CTCP command (most likely, it's a /msg),
-            % so just ignore it.
-            zane_log:log(?MODULE, "Not a CTCP command: ~p", [Cmd]);
-        "SOURCE" ->
-            irc_proto:ctcp(Sock, From, source, ?SOURCE);
-        "VERSION" ->
-            Version = io_lib:format("zanegort v~s", [zanegort_app:vsn()]),
-            irc_proto:ctcp(Sock, From, version, Version);
-        _ ->
-            zane_log:log(?MODULE, "Unrecognized CTCP command: ~p", [Cmd])
-    end,
+handle_event({privmsg, From, Nickname, [Cmd|_]}, State=#state{sock=Sock, client=#irc_client{nickname=Nickname}}) ->
+    handle_ctcp(Sock, From, list_to_binary(Cmd)),
     {ok, State};
 handle_event({privmsg, _From, Channel, _Args}, State=#state{client=#irc_client{channel=Channel}}) ->
     {ok, State};
@@ -59,3 +44,15 @@ terminate(Reason, _State) ->
 code_change(OldVsn, State, _Extra) ->
     zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
     {ok, State}.
+
+
+%% Private implementation
+%% ----------------------------------------------------------------------------
+
+handle_ctcp(Sock, From, <<1,"SOURCE",1>>) ->
+    irc_proto:ctcp(Sock, From, source, ?SOURCE);
+handle_ctcp(Sock, From, <<1,"VERSION",1>>) ->
+    Version = io_lib:format("zanegort v~s", [zanegort_app:vsn()]),
+    irc_proto:ctcp(Sock, From, version, Version);
+handle_ctcp(_Sock, _From, Cmd) ->
+    zane_log:log(?MODULE, "Unrecognized CTCP command: ~p", [Cmd]).
