@@ -70,6 +70,10 @@ dispatch(Sock, To, _From, ["reddit","for",Nickname]) ->
     Prefix = "http://reddit.com/user/",
     Noun = "Reddit profile",
     get_property_or_error(Sock, To, Nickname, "reddit", Prefix, Noun);
+dispatch(Sock, To, _From, ["twitter","for",Nickname]) ->
+    Prefix = "https://twitter.com/",
+    Noun = "Twitter profile",
+    get_property_or_error(Sock, To, Nickname, "twitter", Prefix, Noun);
 dispatch(Sock, To, From, ["set","web","to",Url]) ->
     put_property(Sock, To, "web", From, Url);
 dispatch(Sock, To, From, ["set","github","to",Username]) ->
@@ -78,6 +82,8 @@ dispatch(Sock, To, From, ["set","stack","to",UserId]) ->
     put_property(Sock, To, "stack", From, UserId);
 dispatch(Sock, To, From, ["set","reddit","to",Username]) ->
     put_property(Sock, To, "reddit", From, Username);
+dispatch(Sock, To, From, ["set","twitter","to",Username]) ->
+    put_property(Sock, To, "twitter", From, Username);
 dispatch(Sock, To, _From, ["help"]) ->
     Msg = "Command help is available at " ++ ?HELP_URL,
     irc_proto:say(Sock, To, Msg);
