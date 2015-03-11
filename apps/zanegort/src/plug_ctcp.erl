@@ -54,5 +54,6 @@ handle_ctcp(Sock, From, <<1,"SOURCE",1>>) ->
 handle_ctcp(Sock, From, <<1,"VERSION",1>>) ->
     Version = io_lib:format("zanegort v~s", [zanegort_app:vsn()]),
     irc_proto:ctcp(Sock, From, version, Version);
-handle_ctcp(_Sock, _From, Cmd) ->
+handle_ctcp(_Sock, _From, Arg) ->
+    Cmd = string:strip(Arg, both, 1),
     zane_log:log(?MODULE, "Unrecognized CTCP command: ~p", [Cmd]).
