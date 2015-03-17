@@ -10,6 +10,7 @@
     code_change/3,
     terminate/2
 ]).
+-export([extract_url/1]).
 
 -record(state, {client, sock}).
 
@@ -74,7 +75,8 @@ dispatch(Sock, To, _From, ["twitter","for",Nickname]) ->
     Prefix = "https://twitter.com/",
     Noun = "Twitter profile",
     get_property_or_error(Sock, To, Nickname, "twitter", Prefix, Noun);
-dispatch(Sock, To, From, ["set","web","to",Url]) ->
+dispatch(Sock, To, From, ["set","web","to"|Args]) ->
+    Url = extract_url(Args),
     put_property(Sock, To, "web", From, Url);
 dispatch(Sock, To, From, ["set","github","to",Username]) ->
     put_property(Sock, To, "github", From, Username);
@@ -99,6 +101,14 @@ normalize_listener(Nickname) ->
     case string:rchr(Nickname, $,) of
         L -> string:substr(Nickname, 1, L-1);
         _ -> Nickname
+    end.
+
+extract_url([Head|Rest]) ->
+    case string:substr(Head, 1, 4) of
+        "http" ->
+            string:strip(string:join(Rest, ""), left, $/);
+        _ ->
+            Head
     end.
 
 get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
