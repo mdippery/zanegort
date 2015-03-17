@@ -90,7 +90,7 @@ dispatch(Sock, To, _From, ["help"]) ->
     Msg = "Command help is available at " ++ ?HELP_URL,
     irc_proto:say(Sock, To, Msg);
 dispatch(Sock, To, _From, _Args) ->
-    irc_proto:say(Sock, To, "no thanks!").
+    irc_proto:me(Sock, To, "shrugs").
 
 normalize_listener("zane") ->
     "zanegort";
