@@ -22,6 +22,7 @@ init({Client, Sock}) ->
 
 
 handle_event({privmsg, _From, Channel, ["!eval"|_Args]}, State=#state{sock=Sock, client=#irc_client{channel=Channel}}) ->
+    zane_log:log(?MODULE, "Responding to !eval"),
     timer:sleep(1500),
     irc_proto:say(Sock, Channel, "wrong! the answer is 42"),
     {ok, State};

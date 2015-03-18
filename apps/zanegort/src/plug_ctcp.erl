@@ -50,8 +50,10 @@ code_change(OldVsn, State, _Extra) ->
 %% ----------------------------------------------------------------------------
 
 handle_ctcp(Sock, From, <<1,"SOURCE",1>>) ->
+    zane_log:log(?MODULE, "Responding to /ctcp SOURCE from ~p", [From]),
     irc_proto:ctcp(Sock, From, source, ?SOURCE);
 handle_ctcp(Sock, From, <<1,"VERSION",1>>) ->
+    zane_log:log(?MODULE, "Responding to /ctcp VERSION from ~p", [From]),
     Version = io_lib:format("zanegort v~s", [zanegort_app:vsn()]),
     irc_proto:ctcp(Sock, From, version, Version);
 handle_ctcp(_Sock, _From, Arg) ->

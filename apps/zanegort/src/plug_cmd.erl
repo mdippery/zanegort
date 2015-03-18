@@ -113,6 +113,7 @@ extract_url([Head|Rest]) ->
     end.
 
 get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
+    zane_log:log(?MODULE, "Getting ~p for ~p", [Key, Nickname]),
     case zane_db:find(Key, Nickname) of
         {ok, Value} ->
             Url = Prefix ++ Value,
@@ -128,6 +129,7 @@ get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
     end.
 
 put_property(Sock, Channel, Type, Nickname, Value) ->
+    zane_log:log(?MODULE, "Setting ~p to ~p for ~p", [Type, Value, Nickname]),
     case zane_db:insert(Type, Nickname, Value) of
         ok ->
             irc_proto:say(Sock, Channel, "Set " ++ Type ++ " for " ++ Nickname ++ " to " ++ Value),
