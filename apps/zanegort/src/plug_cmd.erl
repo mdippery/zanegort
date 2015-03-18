@@ -106,7 +106,8 @@ normalize_listener(Nickname) ->
 extract_url([Head|Rest]) ->
     case string:substr(Head, 1, 4) of
         "http" ->
-            string:strip(string:join(Rest, ""), left, $/);
+            Path = string:join(Rest, ""),
+            Head ++ ":" ++ Path;
         _ ->
             Head
     end.
