@@ -136,6 +136,6 @@ put_property(Sock, Channel, Type, Nickname, Value) ->
             ok;
         {error, Reason} ->
             zane_log:log(?MODULE, "Error saving ~p for ~p: ~p", [Type, Nickname, Reason]),
-            irc_proto:say("damn it"),
+            irc_proto:say(Sock, Channel, "damn it"),
             error
     end.
