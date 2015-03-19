@@ -15,7 +15,7 @@ insert(Type, Nickname, Value) ->
                 {found, NewLines} ->
                     case save_lines(Type, NewLines) of
                         ok ->
-                            ok;
+                            {ok, updated};
                         {error, Reason} ->
                             {error, Reason}
                     end;
@@ -25,7 +25,12 @@ insert(Type, Nickname, Value) ->
         _ ->
             Path = db_path(Type),
             Line = string:join([Nickname, Value], ",") ++ "\n",
-            file:write_file(Path, Line, [append])
+            case file:write_file(Path, Line, [append]) of
+                ok ->
+                    {ok, inserted};
+                {error, Reason} ->
+                    {error, Reason}
+            end
     end.
 
 find(Type, Nickname) ->

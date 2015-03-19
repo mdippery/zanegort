@@ -131,7 +131,7 @@ get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
 put_property(Sock, Channel, Type, Nickname, Value) ->
     zane_log:log(?MODULE, "Setting ~p to ~p for ~p", [Type, Value, Nickname]),
     case zane_db:insert(Type, Nickname, Value) of
-        ok ->
+        {ok, inserted} ->
             irc_proto:say(Sock, Channel, "Set " ++ Type ++ " for " ++ Nickname ++ " to " ++ Value),
             ok;
         {ok, updated} ->
