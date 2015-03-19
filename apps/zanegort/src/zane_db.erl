@@ -1,5 +1,6 @@
 -module(zane_db).
 -export([insert/3, find/2]).
+-export([gather_lines/1, replace_line/3, save_lines/2]).
 
 
 db_base_dir() -> os_utils:getenv("ZANE_DB_DIR", "/tmp").
@@ -9,8 +10,18 @@ db_path(Type) -> filename:join(db_base_dir(), Type).
 insert(Type, Nickname, Value) ->
     case find(Type, Nickname) of
         {ok, _} ->
-            % TODO: Replace duplicates
-            {error, duplicate};
+            Lines = gather_lines(Type),
+            case replace_line(Nickname, Value, Lines) of
+                {found, NewLines} ->
+                    case save_lines(Type, NewLines) of
+                        ok ->
+                            ok;
+                        {error, Reason} ->
+                            {error, Reason}
+                    end;
+                {not_found, _} ->
+                    {error, not_found}
+            end;
         _ ->
             Path = db_path(Type),
             Line = string:join([Nickname, Value], ",") ++ "\n",
@@ -42,3 +53,41 @@ find_in_lines(Nickname, [Head|Rest]) ->
         Nickname -> {ok, Value};
         _ -> find_in_lines(Nickname, Rest)
     end.
+
+gather_lines(Type) ->
+    Path = db_path(Type),
+    case file:open(Path, [read]) of
+        {ok, Device} -> gather_lines(Device, Type);
+        {error, Reason} -> {error, Reason}
+    end.
+
+gather_lines(Device, Type) -> gather_lines(Device, Type, []).
+
+gather_lines(Device, Type, Acc) ->
+    case io:get_line(Device, "") of
+        eof ->
+            file:close(Device),
+            Acc;
+        Line ->
+            Clean = string:strip(Line, right, $\n),
+            gather_lines(Device, Type, Acc ++ [Clean])
+    end.
+
+replace_line(Nickname, NewValue, Lines) -> replace_line(Nickname, NewValue, [], Lines).
+
+replace_line(_Nickname, _NewValue, Left, []) -> {not_found, Left};
+replace_line(Nickname, NewValue, Left, [Head|Rest]) ->
+    [Nick,_Val|_] = string:tokens(Head, ","),
+    case Nick of
+        Nickname ->
+            New = string:join([Nick, NewValue], ","),
+            NewData = Left ++ [New] ++ Rest,
+            {found, NewData};
+        _ ->
+            replace_line(Nickname, NewValue, Left ++ [Head], Rest)
+    end.
+
+save_lines(Type, Lines) ->
+    AllLines = string:join(Lines, "\n") ++ "\n",
+    Path = db_path(Type),
+    file:write_file(Path, AllLines).

@@ -134,6 +134,9 @@ put_property(Sock, Channel, Type, Nickname, Value) ->
         ok ->
             irc_proto:say(Sock, Channel, "Set " ++ Type ++ " for " ++ Nickname ++ " to " ++ Value),
             ok;
+        {ok, updated} ->
+            irc_proto:say(Sock, Channel, "Updated " ++ Type ++ " for " ++ Nickname ++ " to " ++ Value),
+            ok;
         {error, Reason} ->
             zane_log:log(?MODULE, "Error saving ~p for ~p: ~p", [Type, Nickname, Reason]),
             irc_proto:say(Sock, Channel, "damn it"),
