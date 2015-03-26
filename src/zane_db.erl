@@ -1,6 +1,5 @@
 -module(zane_db).
 -export([insert/3, find/2]).
--export([gather_lines/1, replace_line/3, save_lines/2]).
 
 
 db_base_dir() -> os_utils:getenv("ZANE_DB_DIR", "/tmp").
