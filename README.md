@@ -6,11 +6,11 @@ channels, particularly programming-oriented ones.
 You must have [rebar](https://github.com/rebar/rebar/#downloading) installed to
 compile zanegort.
 
-    $ rebar compile
+    $ make
 
 ## Usage
 
-    $ rebar shell
+    $ make shell
     > application:start(zanegort).
     > zane_bot:start_link(Hostname, Port, Nickname, Channel).
     > zane_bot:stop().
