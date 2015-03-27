@@ -19,6 +19,7 @@
 %% ----------------------------------------------------------------------------
 
 init(Client) ->
+    zane_log:log(?MODULE, "Loading plugin"),
     {ok, Client}.
 
 handle_event({privmsg, From, Channel, [Listener|Args]}, State=#irc_client{channel=Channel, nickname=Nickname}) ->

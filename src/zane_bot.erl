@@ -14,6 +14,7 @@
 
 -define(SRV, ?MODULE).
 -define(EVENT_SRV, event_mgr).
+-define(PLUGINS, [plug_cmd, plug_ctcp, plug_webdev]).
 -define(QUIT, "User terminated connection").
 
 -record(state, {client, sock}).
@@ -36,12 +37,11 @@ init({Host, Port, Nickname, Channel}) ->
     irc_proto:nick(Nickname),
     irc_proto:user(Nickname),
     {ok, _} = gen_event:start_link({local, ?EVENT_SRV}),
-    gen_event:add_handler(?EVENT_SRV, plug_cmd, Client),
-    gen_event:add_handler(?EVENT_SRV, plug_ctcp, Client),
-    gen_event:add_handler(?EVENT_SRV, plug_webdev, Client),
+    ok = lists:foreach(
+        fun(Plugin) -> gen_event:add_handler(?EVENT_SRV, Plugin, Client) end,
+        ?PLUGINS),
     State = #state{client=Client, sock=Sock},
     {ok, State}.
-
 
 handle_call(Msg, From, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message from ~p: ~p", [From, Msg]),
