@@ -11,24 +11,22 @@
     terminate/2
 ]).
 
--record(state, {client, sock}).
-
 
 %% Behaviour: gen_event
 %% ----------------------------------------------------------------------------
 
-init({Client, Sock}) ->
-    {ok, #state{client=Client, sock=Sock}}.
+init(Client) ->
+    {ok, Client}.
 
 
-handle_event({privmsg, _From, Channel, ["!eval"|_]}, State=#state{sock=Sock, client=#irc_client{channel=Channel}}) ->
+handle_event({privmsg, _From, Channel, ["!eval"|_]}, State=#irc_client{channel=Channel}) ->
     zane_log:log(?MODULE, "Responding to !eval"),
     timer:sleep(1500),
-    irc_proto:say(Sock, Channel, "wrong! the answer is 42"),
+    irc_proto:say(Channel, "wrong! the answer is 42"),
     {ok, State};
-handle_event({privmsg, _From, Channel, ["!boobs"|_]}, State=#state{sock=Sock, client=#irc_client{channel=Channel}}) ->
+handle_event({privmsg, _From, Channel, ["!boobs"|_]}, State=#irc_client{channel=Channel}) ->
     zane_log:log(?MODULE, "Responding to !boobs"),
-    irc_proto:say(Sock, Channel, "(.)(.)"),
+    irc_proto:say(Channel, "(.)(.)"),
     {ok, State};
 handle_event({privmsg, _From, _Channel, _Args}, State) ->
     {ok, State};

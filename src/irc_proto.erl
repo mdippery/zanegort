@@ -1,40 +1,88 @@
 -module(irc_proto).
+-behaviour(gen_server).
+
+-export([start_link/1]).
 -export([
-    pong/2,
-    nick/2,
-    user/2,
-    join/2,
-    quit/2,
-    say/3,
-    me/3,
-    ctcp/4
+    init/1,
+    handle_call/3,
+    handle_cast/2,
+    handle_info/2,
+    terminate/2,
+    code_change/3
+]).
+-export([
+    pong/1,
+    nick/1,
+    user/1,
+    join/1,
+    quit/1,
+    say/2,
+    me/2,
+    ctcp/3
 ]).
 
+-define(SRV, ?MODULE).
 
-pong(Sock, Resp) -> send(Sock, "PONG " ++ Resp).
 
-nick(Sock, Nickname) -> send(Sock, "NICK " ++ Nickname).
+start_link(Sock) ->
+    gen_server:start_link({local, ?SRV}, ?MODULE, Sock, []).
 
-user(Sock, Username) -> send(Sock, "USER " ++ Username ++ " 0 * :" ++ Username).
+pong(Resp) -> send("PONG " ++ Resp).
 
-join(Sock, Channel) -> send(Sock, "JOIN :" ++ Channel).
+nick(Nickname) -> send("NICK " ++ Nickname).
 
-quit(Sock, Msg) -> send(Sock, "QUIT :" ++ Msg).
+user(Username) -> send("USER " ++ Username ++ " 0 * :" ++ Username).
 
-say(Sock, To, Msg) -> send(Sock, "PRIVMSG " ++ To ++ " :" ++ Msg).
+join(Channel) -> send("JOIN :" ++ Channel).
 
-me(Sock, To, Action) ->
+quit(Msg) -> send("QUIT :" ++ Msg).
+
+say(To, Msg) -> send("PRIVMSG " ++ To ++ " :" ++ Msg).
+
+me(To, Action) ->
     Msg = [1|"ACTION "] ++ Action ++ [1],
-    send(Sock, "PRIVMSG " ++ To ++ " :" ++ Msg).
+    send("PRIVMSG " ++ To ++ " :" ++ Msg).
 
-ctcp(Sock, To, Action, Msg) when is_atom(Action) ->
-    ctcp(Sock, To, string:to_upper(atom_to_list(Action)), Msg);
-ctcp(Sock, To, Action, Msg) ->
+ctcp(To, Action, Msg) when is_atom(Action) ->
+    ctcp(To, string:to_upper(atom_to_list(Action)), Msg);
+ctcp(To, Action, Msg) ->
     UAction = string:to_upper(Action),
     FullMsg = UAction ++ " " ++ Msg,
     CtcpMsg = [1|FullMsg] ++ [1],
-    notice(Sock, To, CtcpMsg).
+    notice(To, CtcpMsg).
 
-notice(Sock, To, Msg) -> send(Sock, "NOTICE " ++ To ++ " :" ++ Msg).
+notice(To, Msg) -> send("NOTICE " ++ To ++ " :" ++ Msg).
 
-send(Sock, Line) -> gen_tcp:send(Sock, Line ++ "\r\n").
+
+%% Behaviour: gen_server
+%% ----------------------------------------------------------------------------
+
+init(Sock) -> {ok, Sock}.
+
+handle_call(Msg, From, State) ->
+    zane_log:log(?MODULE, "Ignoring unknown message from ~p: ~p", [From, Msg]),
+    {noreply, State}.
+
+handle_cast({response, Line}, Sock) ->
+    gen_tcp:send(Sock, Line),
+    {noreply, Sock};
+handle_cast(Msg, State) ->
+    zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
+    {noreply, State}.
+
+handle_info(Msg, State) ->
+    zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
+    {noreply, State}.
+
+terminate(Reason, _State) ->
+    zane_log:log(?MODULE, "Terminating (~p)", [Reason]),
+    ok.
+
+code_change(OldVsn, State, _Extra) ->
+    zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
+    {ok, State}.
+
+%% Private implementation
+%% ----------------------------------------------------------------------------
+
+send(Line) -> gen_server:cast(?SRV, {response, Line ++ "\r\n"}).

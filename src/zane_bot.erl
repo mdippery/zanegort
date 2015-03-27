@@ -32,12 +32,13 @@ stop() ->
 init({Host, Port, Nickname, Channel}) ->
     Client = #irc_client{host=Host, port=Port, nickname=Nickname, channel=Channel},
     {ok, Sock} = gen_tcp:connect(Host, Port, [{packet, line}]),
-    irc_proto:nick(Sock, Nickname),
-    irc_proto:user(Sock, Nickname),
+    {ok, _} = irc_proto:start_link(Sock),
+    irc_proto:nick(Nickname),
+    irc_proto:user(Nickname),
     {ok, _} = gen_event:start_link({local, ?EVENT_SRV}),
-    gen_event:add_handler(?EVENT_SRV, plug_cmd, {Client, Sock}),
-    gen_event:add_handler(?EVENT_SRV, plug_ctcp, {Client, Sock}),
-    gen_event:add_handler(?EVENT_SRV, plug_webdev, {Client, Sock}),
+    gen_event:add_handler(?EVENT_SRV, plug_cmd, Sock),
+    gen_event:add_handler(?EVENT_SRV, plug_ctcp, Sock),
+    gen_event:add_handler(?EVENT_SRV, plug_webdev, Sock),
     State = #state{client=Client, sock=Sock},
     {ok, State}.
 
@@ -47,11 +48,11 @@ handle_call(Msg, From, State) ->
     {noreply, State}.
 
 handle_cast(disconnect, State=#state{sock=Sock}) ->
-    irc_proto:quit(Sock, ?QUIT),
+    irc_proto:quit(?QUIT),
     gen_tcp:close(Sock),
     {stop, normal, State};
 handle_cast({disconnect, Reason, Quit}, State=#state{sock=Sock}) ->
-    irc_proto:quit(Sock, Quit),
+    irc_proto:quit(Quit),
     gen_tcp:close(Sock),
     {stop, {error, Reason}, State};
 handle_cast(Msg, State) ->
@@ -81,24 +82,24 @@ code_change(OldVsn, State, _Extra) ->
 %% Private implementation
 %% ----------------------------------------------------------------------------
 
-process_line(#state{sock=Sock, client=#irc_client{channel=Channel}}, [_,"376"|_]) ->
-    irc_proto:join(Sock, Channel);
+process_line(#state{client=#irc_client{channel=Channel}}, [_,"376"|_]) ->
+    irc_proto:join(Channel);
 process_line(#state{client=#irc_client{channel=Channel}}, [_,"473"|_]) ->
     zane_log:log(?MODULE, "~p is invite-only", [Channel]),
     gen_server:cast(?SRV, {disconnect, inviteonly, "aw :("});
 process_line(#state{client=#irc_client{nickname=Nickname, channel=Channel}}, [_,"474"|_]) ->
     zane_log:log(?MODULE, "~p is banned from ~p", [Nickname, Channel]),
     gen_server:cast(?SRV, {disconnect, banned, "aw :("});
-process_line(#state{sock=Sock}, ["PING"|Rest]) ->
-    irc_proto:pong(Sock, Rest);
+process_line(_State, ["PING"|Rest]) ->
+    irc_proto:pong(Rest);
 process_line(_State, [Sender,"PRIVMSG",To|Args]) ->
     From = extract_nickname(Sender),
     gen_event:notify(?EVENT_SRV, {privmsg, From, To, Args});
-process_line(#state{sock=Sock, client=#irc_client{nickname=Nickname}}, [_,"KICK",Channel,Nickname|Args]) ->
+process_line(#state{client=#irc_client{nickname=Nickname}}, [_,"KICK",Channel,Nickname|Args]) ->
     Msg = string:join(Args, " "),
     zane_log:log(?MODULE, "Kicked from ~p: ~p. Rejoining.", [Channel, Msg]),
     timer:sleep(5000),
-    irc_proto:join(Sock, Channel);
+    irc_proto:join(Channel);
 process_line(_State, _Line) ->
     ok.
 

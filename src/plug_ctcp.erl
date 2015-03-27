@@ -10,20 +10,18 @@
     terminate/2
 ]).
 
--record(state, {client, sock}).
-
 
 %% Behaviour: gen_event
 %% ----------------------------------------------------------------------------
 
-init({Client, Sock}) ->
-    {ok, #state{client=Client, sock=Sock}}.
+init(Client) ->
+    {ok, Client}.
 
 
-handle_event({privmsg, From, Nickname, [Cmd|_]}, State=#state{sock=Sock, client=#irc_client{nickname=Nickname}}) ->
-    handle_ctcp(Sock, From, list_to_binary(Cmd)),
+handle_event({privmsg, From, Nickname, [Cmd|_]}, State=#irc_client{nickname=Nickname}) ->
+    handle_ctcp(From, list_to_binary(Cmd)),
     {ok, State};
-handle_event({privmsg, _From, Channel, _Args}, State=#state{client=#irc_client{channel=Channel}}) ->
+handle_event({privmsg, _From, Channel, _Args}, State=#irc_client{channel=Channel}) ->
     {ok, State};
 handle_event(Msg, State) ->
     zane_log:log(?MODULE, "Ignoring unknown event: ~p", [Msg]),
@@ -49,13 +47,13 @@ code_change(OldVsn, State, _Extra) ->
 %% Private implementation
 %% ----------------------------------------------------------------------------
 
-handle_ctcp(Sock, From, <<1,"SOURCE",1>>) ->
+handle_ctcp(From, <<1,"SOURCE",1>>) ->
     zane_log:log(?MODULE, "Responding to /ctcp SOURCE from ~p", [From]),
-    irc_proto:ctcp(Sock, From, source, ?SOURCE);
-handle_ctcp(Sock, From, <<1,"VERSION",1>>) ->
+    irc_proto:ctcp(From, source, ?SOURCE);
+handle_ctcp(From, <<1,"VERSION",1>>) ->
     zane_log:log(?MODULE, "Responding to /ctcp VERSION from ~p", [From]),
     Version = io_lib:format("zanegort v~s", [zanegort_app:vsn()]),
-    irc_proto:ctcp(Sock, From, version, Version);
-handle_ctcp(_Sock, _From, Arg) when is_binary(Arg) ->
+    irc_proto:ctcp(From, version, Version);
+handle_ctcp(_From, Arg) when is_binary(Arg) ->
     Cmd = string:strip(binary_to_list(Arg), both, 1),
     zane_log:log(?MODULE, "Unrecognized CTCP command: ~p", [Cmd]).

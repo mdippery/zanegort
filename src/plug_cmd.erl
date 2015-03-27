@@ -12,21 +12,19 @@
 ]).
 -export([extract_url/1]).
 
--record(state, {client, sock}).
-
 -define(HELP_URL, "https://github.com/mdippery/zanegort/wiki/Help").
 
 
 %% Behaviour: gen_event
 %% ----------------------------------------------------------------------------
 
-init({Client, Sock}) ->
-    {ok, #state{client=Client, sock=Sock}}.
+init(Client) ->
+    {ok, Client}.
 
-handle_event({privmsg, From, Channel, [Listener|Args]}, State=#state{sock=Sock, client=#irc_client{channel=Channel, nickname=Nickname}}) ->
+handle_event({privmsg, From, Channel, [Listener|Args]}, State=#irc_client{channel=Channel, nickname=Nickname}) ->
     case normalize_listener(Listener) of
         Nickname ->
-            dispatch(Sock, Channel, From, Args),
+            dispatch(Channel, From, Args),
             {ok, State};
         _ ->
             {ok, State}
@@ -57,40 +55,40 @@ code_change(OldVsn, State, _Extra) ->
 %% Private implementation
 %% ----------------------------------------------------------------------------
 
-dispatch(Sock, To, _From, ["web","for",Nickname]) ->
-    get_property_or_error(Sock, To, Nickname, "web", "", "website");
-dispatch(Sock, To, _From, ["github","for",Nickname]) ->
+dispatch(To, _From, ["web","for",Nickname]) ->
+    get_property_or_error(To, Nickname, "web", "", "website");
+dispatch(To, _From, ["github","for",Nickname]) ->
     Prefix = "https://github.com/",
     Noun = "GitHub profile",
-    get_property_or_error(Sock, To, Nickname, "github", Prefix, Noun);
-dispatch(Sock, To, _From, ["stack","for",Nickname]) ->
+    get_property_or_error(To, Nickname, "github", Prefix, Noun);
+dispatch(To, _From, ["stack","for",Nickname]) ->
     Prefix = "http://stackoverflow.com/users/",
     Noun = "Stack Overflow profile",
-    get_property_or_error(Sock, To, Nickname, "stack", Prefix, Noun);
-dispatch(Sock, To, _From, ["reddit","for",Nickname]) ->
+    get_property_or_error(To, Nickname, "stack", Prefix, Noun);
+dispatch(To, _From, ["reddit","for",Nickname]) ->
     Prefix = "http://reddit.com/user/",
     Noun = "Reddit profile",
-    get_property_or_error(Sock, To, Nickname, "reddit", Prefix, Noun);
-dispatch(Sock, To, _From, ["twitter","for",Nickname]) ->
+    get_property_or_error(To, Nickname, "reddit", Prefix, Noun);
+dispatch(To, _From, ["twitter","for",Nickname]) ->
     Prefix = "https://twitter.com/",
     Noun = "Twitter profile",
-    get_property_or_error(Sock, To, Nickname, "twitter", Prefix, Noun);
-dispatch(Sock, To, From, ["set","web","to"|Args]) ->
+    get_property_or_error(To, Nickname, "twitter", Prefix, Noun);
+dispatch(To, From, ["set","web","to"|Args]) ->
     Url = extract_url(Args),
-    put_property(Sock, To, "web", From, Url);
-dispatch(Sock, To, From, ["set","github","to",Username]) ->
-    put_property(Sock, To, "github", From, Username);
-dispatch(Sock, To, From, ["set","stack","to",UserId]) ->
-    put_property(Sock, To, "stack", From, UserId);
-dispatch(Sock, To, From, ["set","reddit","to",Username]) ->
-    put_property(Sock, To, "reddit", From, Username);
-dispatch(Sock, To, From, ["set","twitter","to",Username]) ->
-    put_property(Sock, To, "twitter", From, Username);
-dispatch(Sock, To, _From, ["help"]) ->
+    put_property(To, "web", From, Url);
+dispatch(To, From, ["set","github","to",Username]) ->
+    put_property(To, "github", From, Username);
+dispatch(To, From, ["set","stack","to",UserId]) ->
+    put_property(To, "stack", From, UserId);
+dispatch(To, From, ["set","reddit","to",Username]) ->
+    put_property(To, "reddit", From, Username);
+dispatch(To, From, ["set","twitter","to",Username]) ->
+    put_property(To, "twitter", From, Username);
+dispatch(To, _From, ["help"]) ->
     Msg = "Command help is available at " ++ ?HELP_URL,
-    irc_proto:say(Sock, To, Msg);
-dispatch(Sock, To, _From, _Args) ->
-    irc_proto:me(Sock, To, "shrugs").
+    irc_proto:say(To, Msg);
+dispatch(To, _From, _Args) ->
+    irc_proto:me(To, "shrugs").
 
 normalize_listener("zane") ->
     "zanegort";
@@ -112,33 +110,33 @@ extract_url([Head|Rest]) ->
             Head
     end.
 
-get_property_or_error(Sock, Channel, Nickname, Key, Prefix, Noun) ->
+get_property_or_error(Channel, Nickname, Key, Prefix, Noun) ->
     zane_log:log(?MODULE, "Getting ~p for ~p", [Key, Nickname]),
     case zane_db:find(Key, Nickname) of
         {ok, Value} ->
             Url = Prefix ++ Value,
-            irc_proto:say(Sock, Channel, Nickname ++ "'s " ++ Noun ++ " is " ++ Url),
+            irc_proto:say(Channel, Nickname ++ "'s " ++ Noun ++ " is " ++ Url),
             ok;
         nil ->
-            irc_proto:say(Sock, Channel, "i don't know!"),
+            irc_proto:say(Channel, "i don't know!"),
             ok;
         {error, Reason} ->
             zane_log:log(?MODULE, "Error getting ~p for ~p: ~p", [Key, Nickname, Reason]),
-            irc_proto:say(Sock, Channel, "i don't know!"),
+            irc_proto:say(Channel, "i don't know!"),
             error
     end.
 
-put_property(Sock, Channel, Type, Nickname, Value) ->
+put_property(Channel, Type, Nickname, Value) ->
     zane_log:log(?MODULE, "Setting ~p to ~p for ~p", [Type, Value, Nickname]),
     case zane_db:insert(Type, Nickname, Value) of
         {ok, inserted} ->
-            irc_proto:say(Sock, Channel, "Set " ++ Type ++ " for " ++ Nickname ++ " to " ++ Value),
+            irc_proto:say(Channel, "Set " ++ Type ++ " for " ++ Nickname ++ " to " ++ Value),
             ok;
         {ok, updated} ->
-            irc_proto:say(Sock, Channel, "Updated " ++ Type ++ " for " ++ Nickname ++ " to " ++ Value),
+            irc_proto:say(Channel, "Updated " ++ Type ++ " for " ++ Nickname ++ " to " ++ Value),
             ok;
         {error, Reason} ->
             zane_log:log(?MODULE, "Error saving ~p for ~p: ~p", [Type, Nickname, Reason]),
-            irc_proto:say(Sock, Channel, "damn it"),
+            irc_proto:say(Channel, "damn it"),
             error
     end.
