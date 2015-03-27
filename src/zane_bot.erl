@@ -36,9 +36,9 @@ init({Host, Port, Nickname, Channel}) ->
     irc_proto:nick(Nickname),
     irc_proto:user(Nickname),
     {ok, _} = gen_event:start_link({local, ?EVENT_SRV}),
-    gen_event:add_handler(?EVENT_SRV, plug_cmd, Sock),
-    gen_event:add_handler(?EVENT_SRV, plug_ctcp, Sock),
-    gen_event:add_handler(?EVENT_SRV, plug_webdev, Sock),
+    gen_event:add_handler(?EVENT_SRV, plug_cmd, Client),
+    gen_event:add_handler(?EVENT_SRV, plug_ctcp, Client),
+    gen_event:add_handler(?EVENT_SRV, plug_webdev, Client),
     State = #state{client=Client, sock=Sock},
     {ok, State}.
 
