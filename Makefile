@@ -12,7 +12,7 @@ dialyzer: $(DEPSOLVER_PLT)
 $(DEPSOLVER_PLT):
 	@dialyzer --build_plt --output_plt $(DEPSOLVER_PLT) --apps erts kernel stdlib crypto compiler
 
-shell:
+shell: compile
 	@$(REBAR) shell
 
 clean:
