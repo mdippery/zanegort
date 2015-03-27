@@ -29,11 +29,11 @@ start_link(Sock) ->
 
 pong(Resp) -> send("PONG " ++ Resp).
 
-nick(Nickname) -> send("NICK " ++ Nickname).
+nick(Nickname) -> send_sync("NICK " ++ Nickname).
 
-user(Username) -> send("USER " ++ Username ++ " 0 * :" ++ Username).
+user(Username) -> send_sync("USER " ++ Username ++ " 0 * :" ++ Username).
 
-join(Channel) -> send("JOIN :" ++ Channel).
+join(Channel) -> send_sync("JOIN :" ++ Channel).
 
 quit(Msg) -> send_sync("QUIT :" ++ Msg).
 

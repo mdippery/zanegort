@@ -35,8 +35,8 @@ init({Host, Port, Nickname, Channel}) ->
     {ok, _} = zane_log:start_link(),
     {ok, Sock} = gen_tcp:connect(Host, Port, [{packet, line}]),
     {ok, _} = irc_proto:start_link(Sock),
-    irc_proto:nick(Nickname),
-    irc_proto:user(Nickname),
+    ok = irc_proto:nick(Nickname),
+    ok = irc_proto:user(Nickname),
     {ok, _} = gen_event:start_link({local, ?EVENT_SRV}),
     ok = lists:foreach(
         fun(Plugin) -> gen_event:add_handler(?EVENT_SRV, Plugin, Client) end,
@@ -84,7 +84,7 @@ code_change(OldVsn, State, _Extra) ->
 %% ----------------------------------------------------------------------------
 
 process_line(#state{client=#irc_client{channel=Channel}}, [_,"376"|_]) ->
-    irc_proto:join(Channel);
+    ok = irc_proto:join(Channel);
 process_line(#state{client=#irc_client{channel=Channel}}, [_,"473"|_]) ->
     zane_log:log(?MODULE, "~p is invite-only", [Channel]),
     gen_server:cast(?SRV, {disconnect, inviteonly, "aw :("});
@@ -100,7 +100,7 @@ process_line(#state{client=#irc_client{nickname=Nickname}}, [_,"KICK",Channel,Ni
     Msg = string:join(Args, " "),
     zane_log:log(?MODULE, "Kicked from ~p: ~p. Rejoining.", [Channel, Msg]),
     timer:sleep(5000),
-    irc_proto:join(Channel);
+    ok = irc_proto:join(Channel);
 process_line(_State, _Line) ->
     ok.
 
