@@ -35,7 +35,7 @@ user(Username) -> send("USER " ++ Username ++ " 0 * :" ++ Username).
 
 join(Channel) -> send("JOIN :" ++ Channel).
 
-quit(Msg) -> send("QUIT :" ++ Msg).
+quit(Msg) -> send_sync("QUIT :" ++ Msg).
 
 say(To, Msg) -> send("PRIVMSG " ++ To ++ " :" ++ Msg).
 
@@ -59,6 +59,9 @@ notice(To, Msg) -> send("NOTICE " ++ To ++ " :" ++ Msg).
 
 init(Sock) -> {ok, Sock}.
 
+handle_call({response, Line}, _From, Sock) ->
+    gen_tcp:send(Sock, Line),
+    {reply, ok, Sock};
 handle_call(Msg, From, State) ->
     zane_log:log(?MODULE, "Ignoring unknown message from ~p: ~p", [From, Msg]),
     {noreply, State}.
@@ -86,3 +89,5 @@ code_change(OldVsn, State, _Extra) ->
 %% ----------------------------------------------------------------------------
 
 send(Line) -> gen_server:cast(?SRV, {response, Line ++ "\r\n"}).
+
+send_sync(Line) -> gen_server:call(?SRV, {response, Line ++ "\r\n"}).

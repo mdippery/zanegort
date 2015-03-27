@@ -49,7 +49,7 @@ handle_call(Msg, From, State) ->
     {noreply, State}.
 
 handle_cast(disconnect, State=#state{sock=Sock}) ->
-    irc_proto:quit(?QUIT),
+    ok = irc_proto:quit(?QUIT),
     gen_tcp:close(Sock),
     {stop, normal, State};
 handle_cast({disconnect, Reason, Quit}, State=#state{sock=Sock}) ->
