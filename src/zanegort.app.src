@@ -1,6 +1,6 @@
 {application, zanegort, [
     {description, "An IRC bot"},
     {vsn, "0.1.0"},
-    {registered, [irc_server, zane_bot, event_mgr]},
+    {registered, [event_mgr, irc_server, zane_bot, zane_log]},
     {applications, [kernel, stdlib]}
 ]}.

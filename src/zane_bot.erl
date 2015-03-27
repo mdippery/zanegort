@@ -32,6 +32,7 @@ stop() ->
 
 init({Host, Port, Nickname, Channel}) ->
     Client = #irc_client{host=Host, port=Port, nickname=Nickname, channel=Channel},
+    {ok, _} = zane_log:start_link(),
     {ok, Sock} = gen_tcp:connect(Host, Port, [{packet, line}]),
     {ok, _} = irc_proto:start_link(Sock),
     irc_proto:nick(Nickname),
