@@ -65,6 +65,7 @@ notice(To, Msg) -> send("NOTICE " ++ To ++ " :" ++ Msg).
 init({Host, Port}) ->
     {ok, Sock} = gen_tcp:connect(Host, Port, [{packet, line}]),
     State = #state{host=Host, port=Port, sock=Sock},
+    zane_bot:handle_connect(),
     {ok, State}.
 
 handle_call({send, Line}, _From, State=#state{sock=Sock}) ->

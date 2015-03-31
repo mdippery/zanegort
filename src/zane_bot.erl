@@ -2,12 +2,8 @@
 -behaviour(gen_server).
 -include("zanegort.hrl").
 
-<<<<<<< HEAD
 -export([start_link/0, stop/0]).
-=======
--export([start_link/4, stop/0]).
--export([handle_line/1, handle_disconnect/0]).
->>>>>>> Avoid sharing gen_tcp sockets between modules
+-export([handle_line/1, handle_connect/0, handle_disconnect/0]).
 -export([
     init/1,
     handle_call/3,
@@ -38,6 +34,9 @@ stop() ->
 handle_line(Line) ->
     gen_server:cast(?SRV, {received, Line}).
 
+handle_connect() ->
+    gen_server:cast(?SRV, connected).
+
 handle_disconnect() ->
     gen_server:cast(?SRV, tcp_closed).
 
@@ -49,8 +48,6 @@ init({Host, Port, Nickname, Channel}) ->
     Client = #irc_client{host=Host, port=Port, nickname=Nickname, channel=Channel},
     {ok, _} = zane_log:start_link(),
     {ok, _} = irc_proto:start_link(Host, Port),
-    irc_proto:nick(Nickname),
-    irc_proto:user(Nickname),
     {ok, _} = gen_event:start_link({local, ?EVENT_SRV}),
     lists:foreach(
         fun(Plugin) -> gen_event:add_handler(?EVENT_SRV, Plugin, Client) end,
@@ -66,6 +63,10 @@ handle_call(Msg, From, State) ->
 handle_cast({received, Data}, State) ->
     Line = zane_string:strip(Data),
     process_line(State, string:tokens(Line, " :")),
+    {noreply, State};
+handle_cast(connected, State=#state{client=#irc_client{nickname=Nickname}}) ->
+    irc_proto:nick(Nickname),
+    irc_proto:user(Nickname),
     {noreply, State};
 handle_cast(disconnect, State) ->
     irc_proto:quit(?QUIT),
