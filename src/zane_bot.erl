@@ -18,8 +18,6 @@
 -define(PLUGINS, [plug_cmd, plug_ctcp, plug_webdev]).
 -define(QUIT, "User terminated connection").
 
--record(state, {client}).
-
 
 start_link() ->
     {ok, Host} = application:get_env(zanegort, irc_host),
@@ -52,70 +50,69 @@ init({Host, Port, Nickname, Channel}) ->
     lists:foreach(
         fun(Plugin) -> gen_event:add_handler(?EVENT_SRV, Plugin, Client) end,
         ?PLUGINS),
-    State = #state{client=Client},
     zane_log:log(?MODULE, "Connected: ~s:~p/~s as ~s", [Host, Port, Channel, Nickname]),
-    {ok, State}.
+    {ok, Client}.
 
-handle_call(Msg, From, State) ->
+handle_call(Msg, From, Client) ->
     zane_log:log(?MODULE, "Ignoring unknown message from ~p: ~p", [From, Msg]),
-    {noreply, State}.
+    {noreply, Client}.
 
-handle_cast({received, Data}, State) ->
+handle_cast({received, Data}, Client) ->
     Line = zane_string:strip(Data),
-    process_line(State, string:tokens(Line, " :")),
-    {noreply, State};
-handle_cast(connected, State=#state{client=#irc_client{nickname=Nickname}}) ->
+    process_line(Client, string:tokens(Line, " :")),
+    {noreply, Client};
+handle_cast(connected, Client=#irc_client{nickname=Nickname}) ->
     irc_proto:nick(Nickname),
     irc_proto:user(Nickname),
-    {noreply, State};
-handle_cast(disconnect, State) ->
+    {noreply, Client};
+handle_cast(disconnect, Client) ->
     irc_proto:quit(?QUIT),
-    {stop, normal, State};
-handle_cast({disconnect, Reason, Quit}, State) ->
+    {stop, normal, Client};
+handle_cast({disconnect, Reason, Quit}, Client) ->
     irc_proto:quit(Quit),
-    {stop, {error, Reason}, State};
-handle_cast(tcp_closed, State) ->
+    {stop, {error, Reason}, Client};
+handle_cast(tcp_closed, Client) ->
     zane_log:log(?MODULE, "Socket closed"),
-    {stop, tcp_closed, State};
-handle_cast(Msg, State) ->
+    {stop, tcp_closed, Client};
+handle_cast(Msg, Client) ->
     zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
-    {noreply, State}.
+    {noreply, Client}.
 
-handle_info(Msg, State) ->
+handle_info(Msg, Client) ->
     zane_log:log(?MODULE, "Ignoring unknown message: ~p", [Msg]),
-    {noreply, State}.
+    {noreply, Client}.
 
-terminate(Reason, _State) ->
+terminate(Reason, _Client) ->
     zane_log:log(?MODULE, "Terminating: ~p", [Reason]),
     ok.
 
-code_change(OldVsn, State, _Extra) ->
+code_change(OldVsn, Client, _Extra) ->
     zane_log:log(?MODULE, "Performing code upgrade from ~p", [OldVsn]),
-    {ok, State}.
+    {ok, Client}.
 
 
 %% Private implementation
 %% ----------------------------------------------------------------------------
 
-process_line(#state{client=#irc_client{channel=Channel}}, [_,"376"|_]) ->
+process_line(#irc_client{channel=Channel}, [_,"376"|_]) ->
     irc_proto:join(Channel);
-process_line(#state{client=#irc_client{channel=Channel}}, [_,"473"|_]) ->
+process_line(#irc_client{channel=Channel}, [_,"473"|_]) ->
     zane_log:log(?MODULE, "~p is invite-only", [Channel]),
     gen_server:cast(?SRV, {disconnect, inviteonly, "aw :("});
-process_line(#state{client=#irc_client{nickname=Nickname, channel=Channel}}, [_,"474"|_]) ->
+process_line(#irc_client{nickname=Nickname, channel=Channel}, [_,"474"|_]) ->
     zane_log:log(?MODULE, "~p is banned from ~p", [Nickname, Channel]),
     gen_server:cast(?SRV, {disconnect, banned, "aw :("});
-process_line(_State, ["PING"|Rest]) ->
+process_line(_Client, ["PING"|Rest]) ->
     irc_proto:pong(Rest);
-process_line(_State, [Sender,"PRIVMSG",To|Args]) ->
+process_line(_Client, [Sender,"PRIVMSG",To|Args]) ->
     From = extract_nickname(Sender),
     gen_event:notify(?EVENT_SRV, {privmsg, From, To, Args});
-process_line(#state{client=#irc_client{nickname=Nickname}}, [_,"KICK",Channel,Nickname|Args]) ->
+process_line(#irc_client{nickname=Nickname}, [_,"KICK",Channel,Nickname|Args]) ->
     Msg = string:join(Args, " "),
     zane_log:log(?MODULE, "Kicked from ~p: ~p. Rejoining.", [Channel, Msg]),
     timer:sleep(5000),
     irc_proto:join(Channel);
-process_line(_State, _Line) ->
+process_line(_Client, _Line) ->
     ok.
 
 extract_nickname(Username) ->
