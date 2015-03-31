@@ -21,9 +21,9 @@ init({Host, Port, Nickname, Channel}) ->
     Opts = {one_for_one, 5, 60},
     Specs = [
         worker(zane_log, []),
-        worker(irc_proto, [Host, Port]),
         worker(zane_bot, [Client]),
-        supervisor(zane_plug_sup, [Client])
+        supervisor(zane_plug_sup, [Client]),
+        worker(irc_proto, [Host, Port])
     ],
     {ok, {Opts, Specs}}.
 
