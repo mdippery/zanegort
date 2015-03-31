@@ -44,9 +44,6 @@ handle_disconnect() ->
 
 init({Host, Port, Nickname, Channel}) ->
     Client = #irc_client{host=Host, port=Port, nickname=Nickname, channel=Channel},
-    {ok, _} = zane_log:start_link(),
-    {ok, _} = irc_proto:start_link(Host, Port),
-    {ok, _} = gen_event:start_link({local, ?EVENT_SRV}),
     lists:foreach(
         fun(Plugin) -> gen_event:add_handler(?EVENT_SRV, Plugin, Client) end,
         ?PLUGINS),
