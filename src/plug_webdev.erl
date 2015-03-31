@@ -29,6 +29,11 @@ handle_event({privmsg, _From, Channel, ["!boobs"|_]}, State=#irc_client{channel=
     zane_log:log(?MODULE, "Responding to !boobs"),
     irc_proto:say(Channel, "(.)(.)"),
     {ok, State};
+handle_event({privmsg, _From, Channel, ["!rekt"|_]}, State=#irc_client{channel=Channel}) ->
+    zane_log:log(?MODULE, "Responding to !rekt"),
+    timer:sleep(3000),
+    irc_proto:say(Channel, "rectum? damn near kill 'im!"),
+    {ok, State};
 handle_event({privmsg, _From, _Channel, _Args}, State) ->
     {ok, State};
 handle_event(Msg, State) ->
