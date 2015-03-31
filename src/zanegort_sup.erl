@@ -1,11 +1,11 @@
 -module(zanegort_sup).
 -behaviour(supervisor).
+-include("zanegort.hrl").
 
 -export([start_link/4]).
 -export([init/1]).
 
 -define(SRV, ?MODULE).
--define(EVENT_SRV, event_mgr).
 -define(SHUTDOWN, 5000).
 
 
@@ -17,12 +17,13 @@ start_link(Host, Port, Nickname, Channel) ->
 %% ----------------------------------------------------------------------------
 
 init({Host, Port, Nickname, Channel}) ->
+    Client = #irc_client{host=Host, port=Port, nickname=Nickname, channel=Channel},
     Opts = {one_for_one, 5, 60},
     Specs = [
         worker(zane_log, []),
-        worker(gen_event, [{local, ?EVENT_SRV}]),
         worker(irc_proto, [Host, Port]),
-        worker(zane_bot, [Host, Port, Nickname, Channel])
+        worker(zane_bot, [Client]),
+        supervisor(zane_plug_sup, [Client])
     ],
     {ok, {Opts, Specs}}.
 
@@ -34,3 +35,8 @@ worker(Module, Args) ->
     {Module,
      {Module, start_link, Args},
      permanent, ?SHUTDOWN, worker, [Module]}.
+
+supervisor(Module, Args) ->
+    {Module,
+     {Module, start_link, Args},
+     permanent, ?SHUTDOWN, supervisor, [Module]}.

@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 -include("zanegort.hrl").
 
--export([start_link/0, stop/0]).
+-export([start_link/1, stop/0]).
 -export([handle_line/1, handle_connect/0, handle_disconnect/0]).
 -export([
     init/1,
@@ -19,12 +19,8 @@
 -define(QUIT, "User terminated connection").
 
 
-start_link() ->
-    {ok, Host} = application:get_env(zanegort, irc_host),
-    {ok, Port} = application:get_env(zanegort, irc_port),
-    {ok, Nickname} = application:get_env(zanegort, irc_nickname),
-    {ok, Channel} = application:get_env(zanegort, irc_channel),
-    gen_server:start_link({local, ?SRV}, ?MODULE, {Host, Port, Nickname, Channel}, []).
+start_link(Client) ->
+    gen_server:start_link({local, ?SRV}, ?MODULE, Client, []).
 
 stop() ->
     gen_server:cast(?SRV, disconnect).
@@ -42,12 +38,8 @@ handle_disconnect() ->
 %% Behaviour: gen_server
 %% ----------------------------------------------------------------------------
 
-init({Host, Port, Nickname, Channel}) ->
-    Client = #irc_client{host=Host, port=Port, nickname=Nickname, channel=Channel},
-    lists:foreach(
-        fun(Plugin) -> gen_event:add_handler(?EVENT_SRV, Plugin, Client) end,
-        ?PLUGINS),
-    zane_log:log(?MODULE, "Connected: ~s:~p/~s as ~s", [Host, Port, Channel, Nickname]),
+init(Client) ->
+    zane_log:log(?MODULE, "Starting up the bot: ~p", [Client]),
     {ok, Client}.
 
 handle_call(Msg, From, Client) ->

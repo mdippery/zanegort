@@ -63,6 +63,7 @@ notice(To, Msg) -> send("NOTICE " ++ To ++ " :" ++ Msg).
 %% ----------------------------------------------------------------------------
 
 init({Host, Port}) ->
+    zane_log:log(?MODULE, "Starting up the IRC protocol connector: ~s:~w", [Host, Port]),
     {ok, Sock} = gen_tcp:connect(Host, Port, [{packet, line}]),
     State = #state{host=Host, port=Port, sock=Sock},
     zane_bot:handle_connect(),
