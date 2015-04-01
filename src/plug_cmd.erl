@@ -88,6 +88,15 @@ dispatch(To, From, ["set","twitter","to",Username]) ->
 dispatch(To, _From, ["help"]) ->
     Msg = "Command help is available at " ++ ?HELP_URL,
     irc_proto:say(To, Msg);
+dispatch(To, _From, ["get","for"|Args]) ->
+    Msg = string:join(Args, " "),
+    zane_log:log(?MODULE, "Unknown \"get for\": ~s", [Msg]),
+    irc_proto:me(To, "shrugs"),
+    irc_proto:say(To, "get what for " ++ Msg ++ "?");
+dispatch(To, From, ["get"|Args]) ->
+    Msg = string:join(Args, " "),
+    zane_log:log(?MODULE, "Munging \"get ~s\" to \"~s\"", [Msg, Msg]),
+    dispatch(To, From, Args);
 dispatch(To, _From, _Args) ->
     irc_proto:me(To, "shrugs").
 
