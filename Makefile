@@ -24,5 +24,7 @@ clean:
 	@$(REBAR) clean
 
 distclean: clean
-	$(RM) $(DEPSOLVER_PLT)
 	$(RM) -r _rel
+
+reallyclean: distclean
+	$(RM) $(DEPSOLVER_PLT)
