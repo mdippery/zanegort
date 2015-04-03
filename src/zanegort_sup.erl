@@ -2,14 +2,18 @@
 -behaviour(supervisor).
 -include("zanegort.hrl").
 
--export([start_link/4]).
+-export([start_link/0]).
 -export([init/1]).
 
 -define(SRV, ?MODULE).
 -define(SHUTDOWN, 5000).
 
 
-start_link(Host, Port, Nickname, Channel) ->
+start_link() ->
+    {ok, Host} = application:get_env(zanegort, irc_host),
+    {ok, Port} = application:get_env(zanegort, irc_port),
+    {ok, Nickname} = application:get_env(zanegort, irc_nickname),
+    {ok, Channel} = application:get_env(zanegort, irc_channel),
     supervisor:start_link({local, ?SRV}, ?MODULE, {Host, Port, Nickname, Channel}).
 
 
