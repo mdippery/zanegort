@@ -3,8 +3,8 @@ channels, particularly programming-oriented ones.
 
 ## Configuring
 
-1. Copy `config/sys.config.sample` to `config/sys.config`.
-2. Change values in `config/sys.config` to suit your preferences. (The options
+1. Copy `rel/sys.config.sample` to `rel/sys.config`.
+2. Change values in `rel/sys.config` to suit your preferences. (The options
    should be fairly self-explanatory.)
 
 ## Building
