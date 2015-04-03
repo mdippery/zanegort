@@ -8,6 +8,12 @@
 -define(SRV, ?MODULE).
 -define(SHUTDOWN, 5000).
 
+-define(CHILD(Type, Module, Args), {Module,
+                                    {Module, start_link, Args},
+                                    permanent, ?SHUTDOWN, Type, [Module]}).
+-define(WORKER(Module, Args), ?CHILD(worker, Module, Args)).
+-define(SUPERVISOR(Module, Args), ?CHILD(supervisor, Module, Args)).
+
 
 start_link() ->
     {ok, Host} = application:get_env(zanegort, irc_host),
@@ -24,23 +30,9 @@ init({Host, Port, Nickname, Channel}) ->
     Client = #irc_client{host=Host, port=Port, nickname=Nickname, channel=Channel},
     Opts = {one_for_one, 5, 60},
     Specs = [
-        worker(zane_log, []),
-        worker(zane_bot, [Client]),
-        supervisor(zane_plug_sup, [Client]),
-        worker(irc_proto, [Host, Port])
+        ?WORKER(zane_log, []),
+        ?WORKER(zane_bot, [Client]),
+        ?SUPERVISOR(zane_plug_sup, [Client]),
+        ?WORKER(irc_proto, [Host, Port])
     ],
     {ok, {Opts, Specs}}.
-
-
-%% Private implementation
-%% ----------------------------------------------------------------------------
-
-worker(Module, Args) ->
-    {Module,
-     {Module, start_link, Args},
-     permanent, ?SHUTDOWN, worker, [Module]}.
-
-supervisor(Module, Args) ->
-    {Module,
-     {Module, start_link, Args},
-     permanent, ?SHUTDOWN, supervisor, [Module]}.
