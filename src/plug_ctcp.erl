@@ -53,7 +53,7 @@ handle_ctcp(From, <<1,"SOURCE",1>>) ->
     irc_proto:ctcp(From, source, ?SOURCE);
 handle_ctcp(From, <<1,"VERSION",1>>) ->
     zane_log:log(?MODULE, "Responding to /ctcp VERSION from ~p", [From]),
-    Version = io_lib:format("zanegort v~s", [zanegort_app:vsn()]),
+    Version = io_lib:format("zanegort v~s", [zanegort:vsn()]),
     irc_proto:ctcp(From, version, Version);
 handle_ctcp(_From, Arg) when is_binary(Arg) ->
     Cmd = string:strip(binary_to_list(Arg), both, 1),
