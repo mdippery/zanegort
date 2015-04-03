@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 -include("zanegort.hrl").
 
--export([start_link/4, stop/0]).
+-export([start_link/0, stop/0]).
 -export([
     init/1,
     handle_call/3,
@@ -20,7 +20,11 @@
 -record(state, {client, sock}).
 
 
-start_link(Host, Port, Nickname, Channel) ->
+start_link() ->
+    {ok, Host} = application:get_env(zanegort, irc_host),
+    {ok, Port} = application:get_env(zanegort, irc_port),
+    {ok, Nickname} = application:get_env(zanegort, irc_nickname),
+    {ok, Channel} = application:get_env(zanegort, irc_channel),
     gen_server:start_link({local, ?SRV}, ?MODULE, {Host, Port, Nickname, Channel}, []).
 
 stop() ->
@@ -42,6 +46,7 @@ init({Host, Port, Nickname, Channel}) ->
         fun(Plugin) -> gen_event:add_handler(?EVENT_SRV, Plugin, Client) end,
         ?PLUGINS),
     State = #state{client=Client, sock=Sock},
+    zane_log:log(?MODULE, "Connected: ~s:~p/~s as ~s", [Host, Port, Channel, Nickname]),
     {ok, State}.
 
 handle_call(Msg, From, State) ->
