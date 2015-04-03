@@ -1,4 +1,5 @@
 REBAR = $(shell which rebar || echo './rebar')
+RELX = ./relx
 RM = rm -f
 DEPSOLVER_PLT = ./.dialyzer_plt
 
@@ -6,6 +7,9 @@ DEPSOLVER_PLT = ./.dialyzer_plt
 
 compile:
 	@$(REBAR) compile
+
+release: compile
+	@$(RELX)
 
 dialyzer: $(DEPSOLVER_PLT)
 	@dialyzer --plt $(DEPSOLVER_PLT) --src ./src
@@ -21,3 +25,4 @@ clean:
 
 distclean: clean
 	$(RM) $(DEPSOLVER_PLT)
+	$(RM) -r _rel
