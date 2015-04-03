@@ -1,0 +1,8 @@
+[
+ {zanegort, [{irc_host, "irc.example.org"},
+             {irc_port, 6667},
+             {irc_nickname, "zanegort"},
+             {irc_channel, "#channel"},
+             {zane_db_dir, "/var/db/zane/example/channel"}
+            ]}
+].

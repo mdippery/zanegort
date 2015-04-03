@@ -1,19 +1,22 @@
 **zanegort** is a simple IRC bot for performing some basic tasks in most IRC
 channels, particularly programming-oriented ones.
 
+## Configuring
+
+1. Copy `config/sys.config.sample` to `config/sys.config`.
+2. Change values in `config/sys.config` to suit your preferences. (The options
+   should be fairly self-explanatory.)
+
 ## Building
 
 You must have [rebar](https://github.com/rebar/rebar/#downloading) installed to
 compile zanegort.
 
-    $ make
+    $ make release
 
 ## Usage
 
-    $ make shell
-    > application:start(zanegort).
-    > zane_bot:start_link(Hostname, Port, Nickname, Channel).
-    > zane_bot:stop().
+    $ _rel/zanegort/bin/zanegort
 
 ## Help
 
