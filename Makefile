@@ -1,7 +1,8 @@
 REBAR = $(shell which rebar || echo './rebar')
+RM = rm -f
 DEPSOLVER_PLT = ./.dialyzer_plt
 
-.PHONY: compile dialyzer shell clean
+.PHONY: compile dialyzer shell clean distclean
 
 compile:
 	@$(REBAR) compile
@@ -17,3 +18,6 @@ shell: compile
 
 clean:
 	@$(REBAR) clean
+
+distclean: clean
+	$(RM) $(DEPSOLVER_PLT)
