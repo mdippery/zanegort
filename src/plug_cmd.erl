@@ -74,6 +74,10 @@ dispatch(To, _From, ["twitter","for",Nickname]) ->
     Prefix = "https://twitter.com/",
     Noun = "Twitter profile",
     get_property_or_error(To, Nickname, "twitter", Prefix, Noun);
+dispatch(To, _From, ["flickr","for",Nickname]) ->
+    Prefix = "https://www.flickr.com/photos/",
+    Noun = "Flickr profile",
+    get_property_or_error(To, Nickname, "flickr", Prefix, Noun);
 dispatch(To, From, ["set","web","to"|Args]) ->
     Url = extract_url(Args),
     put_property(To, "web", From, Url);
@@ -85,6 +89,8 @@ dispatch(To, From, ["set","reddit","to",Username]) ->
     put_property(To, "reddit", From, Username);
 dispatch(To, From, ["set","twitter","to",Username]) ->
     put_property(To, "twitter", From, Username);
+dispatch(To, From, ["set","flickr","to",Username]) ->
+    put_property(To, "flickr", From, Username);
 dispatch(To, _From, ["help"]) ->
     Msg = "Command help is available at " ++ ?HELP_URL,
     irc_proto:say(To, Msg);
