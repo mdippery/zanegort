@@ -3,7 +3,7 @@
     minutes/1, minutes/2,
     hours/1, hours/2,
     days/1, days/2,
-    total_seconds/2,
+    total_seconds/2
 ]).
 
 
@@ -19,4 +19,4 @@ days(Seconds) -> hours(Seconds) div 24.
 
 days(Megaseconds, Seconds) -> days(total_seconds(Megaseconds, Seconds)).
 
-total_seconds(Megaseconds, Seconds) = Megaseconds * 1000000 + Seconds.
+total_seconds(Megaseconds, Seconds) ->  Megaseconds * 1000000 + Seconds.
