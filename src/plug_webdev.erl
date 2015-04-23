@@ -35,7 +35,7 @@ handle_event({privmsg, _From, Channel, ["!rekt"|_]}, State=#irc_client{channel=C
     irc_proto:say(Channel, "rectum? damn near killed 'im!"),
     {ok, State};
 handle_event({privmsg, _From, Channel, ["cmon!"|_]}, State=#irc_client{channel=Channel}) ->
-    zane_log:log(?MODULE, "Respoding to cmon!"),
+    zane_log:log(?MODULE, "Responding to cmon!"),
     timer:sleep(1000),
     irc_proto:say(Channel, "yeah, like i'm going to take a whiz through this $5000 suit. c'mon!"),
     {ok, State};
@@ -43,6 +43,13 @@ handle_event({privmsg, _From, Channel, ["!same"|_]}, State=#irc_client{channel=C
     zane_log:log(?MODULE, "Responding to !same"),
     timer:sleep(3000),
     irc_proto:say(Channel, "eh, not really the same"),
+    {ok, State};
+handle_event({privmsg, "timeshifter", Channel, ["SHUT", "UP"|_]}, State=#irc_client{channel=Channel}) ->
+    zane_log:log(?MODULE, "Responding to timeshifter: SHUT UP"),
+    timer:sleep(750),
+    irc_proto:say(Channel, "YOU SHUT UP"),
+    timer:sleep(1000),
+    irc_proto:say(Channel, "god damn loudmouth bastard"),
     {ok, State};
 handle_event({privmsg, _From, _Channel, _Args}, State) ->
     {ok, State};
