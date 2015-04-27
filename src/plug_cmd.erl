@@ -103,8 +103,8 @@ dispatch(To, From, ["get"|Args]) ->
     Msg = string:join(Args, " "),
     zane_log:log(?MODULE, "Munging \"get ~s\" to \"~s\"", [Msg, Msg]),
     dispatch(To, From, Args);
-dispatch(To, _From, _Args) ->
-    irc_proto:me(To, "shrugs").
+dispatch(_To, _From, _Args) ->
+    nil.
 
 normalize_listener("zane") ->
     "zanegort";
