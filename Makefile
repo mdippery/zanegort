@@ -10,6 +10,7 @@ compile:
 
 release: compile
 	@$(RELX)
+	git tag beta-$(shell date +%s)
 
 dialyzer: $(DEPSOLVER_PLT)
 	@dialyzer --plt $(DEPSOLVER_PLT) --src ./src
